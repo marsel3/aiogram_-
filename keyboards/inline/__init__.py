@@ -1,1 +1,1 @@
-from .inline_kb_menu import main
+from .inline_kb_menu import *

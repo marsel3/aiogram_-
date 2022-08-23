@@ -1,8 +1,7 @@
 from aiogram import types
 from aiogram.types import CallbackQuery
 
-from loader import dp
-import utils.db_api.db_asyncpg as db
+from loader import dp, db_shop
 
 
 @dp.callback_query_handler(text='catalog')

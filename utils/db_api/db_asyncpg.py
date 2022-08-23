@@ -1,4 +1,4 @@
-import asyncio
+"""import asyncio
 import asyncpg
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
@@ -19,3 +19,4 @@ async def categories_markup():
     return markup
 
 
+"""

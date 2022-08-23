@@ -5,13 +5,15 @@ from handlers import dp
 
 from aiogram import executor
 
+import filters
+
 
 async def on_startup(dp):
-    await on_startup_notify(dp)
 
+    filters.setup(dp)
+    await on_startup_notify(dp)
     await set_default_commands(dp)
 
-    print('БОТ ЗАПУЩЕН, ЁБТ!')
 
 
 if __name__ == '__main__':
