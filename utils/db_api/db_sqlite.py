@@ -10,12 +10,17 @@ class DataBase:
     def category(self):
         with self.connection:
             result = self.cursor.execute(f'SELECT * FROM "category"').fetchall()
-            return bool(len(result))
+            return result
+
+    def category_list(self):
+        with self.connection:
+            result = self.cursor.execute(f'SELECT "category_id" FROM "category"').fetchall()
+            return [i[0] for i in result]
 
     def tovar(self, category):
         with self.connection:
-            result = self.cursor.execute(f'SELECT * FROM "tovars" WHERE "category"="{category}"').fetchall()
-            return bool(len(result))
+            result = self.cursor.execute(f'SELECT "tovar_id", "tovar_name" FROM "tovar" WHERE "category_id"="{category}"').fetchall()
+            return result
 
 
 class User:

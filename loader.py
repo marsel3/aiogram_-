@@ -6,8 +6,8 @@ from data import config
 
 bot = Bot(token=config.BOT_TOKEN, parse_mode=types.ParseMode.HTML)
 
-db_tovars = DataBase('db/tovars')
-db_users = User('db/users')
+db_tovars = DataBase('db/tovars.db')
+db_users = User('db/users.db')
 
 
 dp = Dispatcher(bot, storage=MemoryStorage())
