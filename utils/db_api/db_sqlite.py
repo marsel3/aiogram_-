@@ -1,6 +1,7 @@
 import sqlite3
 import datetime
 
+
 class DataBase:
     def __init__(self, db_file):
         self.connection = sqlite3.connect(db_file, check_same_thread=False)
@@ -15,6 +16,7 @@ class DataBase:
         with self.connection:
             result = self.cursor.execute(f'SELECT * FROM "tovars" WHERE "category"="{category}"').fetchall()
             return bool(len(result))
+
 
 class User:
     def __init__(self, db_file):

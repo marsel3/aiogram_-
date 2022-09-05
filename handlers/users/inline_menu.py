@@ -1,29 +1,41 @@
 from aiogram import types
 from aiogram.types import CallbackQuery
 
-from loader import dp, db_shop
+from loader import dp, db_tovars, db_users
+from keyboards.default import keyboard_menu
 
 
-@dp.callback_query_handler(text='catalog')
-async def show_catalog(call: CallbackQuery):
-    try:
-        markup = await db.categories_markup()
-        print(markup)
-        await call.message.edit_reply_markup('catalog', reply_markup=markup)
-    except:
-        await call.message.answer('catalog')
+@dp.message_handler(text=['🗂️ Каталог', 'каталог'])
+async def main(message: types.Message):
+    await message.delete()
+    await message.answer(f'ЭТО КАТАЛОГ!!!',
+                         reply_markup=keyboard_menu.main)
 
 
-@dp.callback_query_handler(text='cart')
-async def show_catalog(call: CallbackQuery):
-    await call.message.edit_text('catalog')
+@dp.message_handler(text=['🛍️ Корзина', 'корзина'])
+async def main(message: types.Message):
+    await message.delete()
+    await message.answer(f'ЭТО КОРЗИНА!!!',
+                         reply_markup=keyboard_menu.main)
 
 
-@dp.callback_query_handler(text='profil')
-async def show_catalog(call: CallbackQuery):
-    await call.message.edit_text('catalog')
+@dp.message_handler(text=['⭐ Избранное', 'избранное'])
+async def main(message: types.Message):
+    await message.delete()
+    await message.answer(f'ЭТО ИЗБРАННОЕ!!!',
+                         reply_markup=keyboard_menu.main)
 
 
-@dp.callback_query_handler(text='help')
-async def show_catalog(call: CallbackQuery):
-    await call.message.edit_text('catalog')
+@dp.message_handler(text=['📲️Помощь', 'помощь'])
+async def main(message: types.Message):
+    await message.delete()
+    await message.answer(f'ЭТО ПОМОЩЬ!!!',
+                         reply_markup=keyboard_menu.main)
+
+
+@dp.message_handler(text=['👤 Профиль', 'профиль'])
+async def main(message: types.Message):
+    await message.delete()
+    await message.answer(f'ЭТО ПРОФИЛЬ!!!',
+                         reply_markup=keyboard_menu.main)
+

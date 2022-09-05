@@ -1,8 +1,9 @@
 from aiogram import types
 
 
+
 async def set_default_commands(dp):
     await dp.bot.set_my_commands([
-        types.BotCommand('start', 'Запустить БОТа'),
-        types.BotCommand('help', 'Запустить БОТа'),
+        # types.BotCommand('start', 'Запустить БОТа'),
+
     ])

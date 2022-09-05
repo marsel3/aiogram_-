@@ -3,7 +3,6 @@ import asyncpg
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 
-
 async def categories_markup():
     conn = await asyncpg.connect(user='postgres', password='1969',
                                  database='shop_db')
