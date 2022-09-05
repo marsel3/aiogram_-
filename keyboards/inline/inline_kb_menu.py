@@ -19,29 +19,13 @@ back_to_menu = InlineKeyboardMarkup(inline_keyboard=[
 )
 
 
-start_calculator = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text='Запустить', callback_data='run')
-         ],
-        [
-        InlineKeyboardButton(text='Назад', callback_data='back_to_menu')
-        ]
-    ]
-)
-
-
-admin_panel = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text='Редактировать статусы', callback_data='admin_start')],
-        [InlineKeyboardButton(text='Назад', callback_data='back_to_menu')]
-    ]
-)
-
-
 def catalog_markup():
     m1 = db_tovars.category()
     markup = InlineKeyboardMarkup()
 
     for i in m1:
         markup.add(InlineKeyboardButton(text=f'{i[1]}', callback_data=f'{i[0]}'))
+    markup.add(InlineKeyboardButton(text='Назад', callback_data='back_to_menu'))
 
     return markup
 
@@ -52,9 +36,11 @@ def tovar_markup(catalog):
 
     for i in m1:
         markup.add(InlineKeyboardButton(text=f'{i[1]}', callback_data=f'tovar_{i[0]}'))
+    markup.add(InlineKeyboardButton(text='Назад в каталог', callback_data='back_to_catalog'))
 
     return markup
 
 
-
+def tovar_card(tovar_id):
+    pass
 
