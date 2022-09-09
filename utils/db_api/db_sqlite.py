@@ -22,6 +22,11 @@ class DataBase:
             result = self.cursor.execute(f'SELECT "tovar_id", "tovar_name" FROM "tovar" WHERE "category_id"="{category}"').fetchall()
             return result
 
+    def tovar_card(self, tovar):
+        with self.connection:
+            result = self.cursor.execute(f'SELECT "tovar_name", "tovar_price", "tovar_disc", "tovar_photo"'
+                                         f'FROM "tovar" WHERE "tovar_id"="{tovar}"').fetchall()[0]
+            return result
 
 class User:
     def __init__(self, db_file):

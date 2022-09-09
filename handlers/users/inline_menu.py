@@ -28,6 +28,16 @@ async def show_catalog(call: CallbackQuery):
 @dp.callback_query_handler(text_startswith='tovar_')
 async def show_catalog(call: CallbackQuery):
     tovar_id = call.data[6:]
+
+    tovar_name, tovar_price, tovar_disc, tovar_photo = db_tovars.tovar_card(tovar_id)
     await call.message.edit_text('Эт тип карточка товара')
+    await dp.bot.edit_message_caption(f'{tovar_name}\t{tovar_price} \n\n{tovar_disc}',
+                                    chat_id=call.message.chat.id,
+                                    message_id=call.message.message_id,
+                                    caption=tovar_photo)
+
+"""    await call.message.edit_media(f'{tovar_name}\t{tovar_price}'
+                                    f'\n\n{tovar_disc}', media=tovar_photo)
 
     # reply_markup=inline_kb_menu.tovar_card(call.data)
+    await call.message.edit_caption('s', )"""

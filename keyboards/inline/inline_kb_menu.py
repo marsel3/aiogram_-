@@ -6,8 +6,7 @@ main = InlineKeyboardMarkup(row_width=2,
                             inline_keyboard=[
                                 [InlineKeyboardButton(text='Запустить калькулятор', callback_data='start_process')
                                  ],
-                                [
-                                 InlineKeyboardButton(text='☎️ Служба поддержки', callback_data='help')
+                                [InlineKeyboardButton(text='☎️ Служба поддержки', callback_data='help')
                                  ]
                             ])
 
