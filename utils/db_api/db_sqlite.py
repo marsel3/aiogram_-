@@ -2,6 +2,7 @@ import sqlite3
 import datetime
 
 
+
 class DataBase:
     def __init__(self, db_file):
         self.connection = sqlite3.connect(db_file, check_same_thread=False)
@@ -28,6 +29,7 @@ class DataBase:
                                          f'FROM "tovar" WHERE "tovar_id"="{tovar}"').fetchall()[0]
             return result
 
+
 class User:
     def __init__(self, db_file):
         self.connection = sqlite3.connect(db_file, check_same_thread=False)
@@ -40,7 +42,13 @@ class User:
 
     def add_user(self, user_id, user_username, user_fullname):
         with self.connection:
-            return self.cursor.execute("INSERT INTO 'users' ('user_id', 'user_username', 'user_fullname') VALUES (?, ?, ?)", (user_id, user_username, user_fullname,))
+            return self.cursor.execute("INSERT INTO 'users' ('user_id', 'user_username', 'user_fullname') "
+                                       "VALUES (?, ?, ?)", (user_id, user_username, user_fullname,))
+
+    def add_basket(self, user, tovar_id, count):
+        with self.connection:
+       #     return self.cursor.execute("INSERT INTO 'users' ('user_id', 'user_username', 'user_fullname') "
+                                       "VALUES (?, ?, ?)", (user_id, user_username, user_fullname,))
 
     def user_info(self, user_id):
         with self.connection:

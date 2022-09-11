@@ -18,6 +18,8 @@ back_to_menu = InlineKeyboardMarkup(inline_keyboard=[
 )
 
 
+
+
 def catalog_markup():
     m1 = db_tovars.category()
     markup = InlineKeyboardMarkup()
@@ -40,6 +42,21 @@ def tovar_markup(catalog):
     return markup
 
 
-def tovar_card(tovar_id):
-    pass
+def tovar_card_markup(tovar_id):
+    markup = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text='Добавить в корзину', callback_data=f'add_{tovar_id}')],
+
+            [InlineKeyboardButton(text=f'➖', callback_data=f'back_to_catalog'),
+             InlineKeyboardButton(text=f'?', callback_data=f'back_to_catalog'),
+             InlineKeyboardButton(text=f'➕', callback_data=f'back_to_catalog')],
+
+            [InlineKeyboardButton(text='Назад', callback_data='back_to_menu')
+             ],
+        ]
+    )
+
+    return markup
+
+
+
 
