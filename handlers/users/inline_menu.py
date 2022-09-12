@@ -19,13 +19,8 @@ async def show_catalog(call: CallbackQuery):
 
 @dp.callback_query_handler(text='back_to_catalog')
 async def show_catalog(call: CallbackQuery):
-    try:
-        await call.message.edit_text('C новой обновой заработает...')
-    except:
-        await dp.bot.delete_message(chat_id=call.message.chat.id,
-                                    message_id=call.message.message_id)
-        await dp.bot.send_message(chat_id=call.message.chat.id,
-                                  text='C новой обновой заработает...')
+    await call.message.edit_text('C новой обновой заработает...')
+
     # await call.message.edit_text('Вы вернулись в каталог',
     #                           reply_markup=inline_kb_menu.tovar_markup(call.data))
 
@@ -35,37 +30,14 @@ async def show_catalog(call: CallbackQuery):
     tovar_id = call.data[6:]
 
     tovar_name, tovar_price, tovar_disc, tovar_photo = db_tovars.tovar_card(tovar_id)
-    markup = inline_kb_menu.tovar_card_markup(tovar_id, call.from_user.id)
+    await call.message.edit_text('Эт тип карточка товара')
+    await dp.bot.edit_message_caption(f'{tovar_name}\t{tovar_price} \n\n{tovar_disc}',
+                                    chat_id=call.message.chat.id,
+                                    message_id=call.message.message_id,
+                                    caption=tovar_photo)
 
-    await dp.bot.delete_message(call.message.chat.id, call.message.message_id)
-    await dp.bot.send_photo(caption=f'{tovar_name}: \t\t{tovar_price}₽ \n\n{tovar_disc}',
-                            chat_id=call.message.chat.id,
-                            photo=tovar_photo,
-                            reply_markup=markup)
-"""    try:
+"""    await call.message.edit_media(f'{tovar_name}\t{tovar_price}'
+                                    f'\n\n{tovar_disc}', media=tovar_photo)
 
-    except Exception as erros:
-        print(erros)
-        await dp.bot.send_message(chat_id=call.message.chat.id,
-                                  text='Возникла ошибка с отправкой карточки товара, сообщите администратору!')
-"""
-
-@dp.callback_query_handler(text_startswith='add_')
-async def show_catalog(call: CallbackQuery):
-    tovar_id = call.data[4:]
-
-
-    await dp.bot.delete_message(call.message.chat.id, call.message.message_id)
-    db_users.add_tovar_(call.from_user.id, tovar_id, count=2)
-    await dp.bot.send_message(call.message.chat.id,
-                              'Товар добавлен в корзину!')
-
-
-@dp.callback_query_handler(text_startswith='favourite_add_')
-async def show_catalog(call: CallbackQuery):
-    tovar_id = call.data[14:]
-
-    db_users.set_favourite(tovar_id, call.from_user.id)
-    await call.message.edit_reply_markup(
-        reply_markup=inline_kb_menu.tovar_card_markup(tovar_id, call.from_user.id))
-
+    # reply_markup=inline_kb_menu.tovar_card(call.data)
+    await call.message.edit_caption('s', )"""
