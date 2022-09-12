@@ -29,6 +29,10 @@ class DataBase:
                                          f'FROM "tovar" WHERE "tovar_id"="{tovar_id}"').fetchall()[0]
             return result
 
+    def tovar_name(self, tovar_id):
+        with self.connection:
+            result = self.cursor.execute(f'SELECT "tovar_name" FROM "tovar" WHERE "tovar_id" = "{tovar_id}" ').fetchall()
+            return result[0] if len(result) > 0 else []
 
 class User:
     def __init__(self, db_file):
@@ -63,8 +67,6 @@ class User:
                                         f'SET "tovar_count"= "{count}" '
                                         f'WHERE "tovar_id" = "{tovar_id}" AND "tovar_count" != "{0}" ')
 
-                    print(count)
-                    print('succes')
                 else:
                     self.cursor.execute(f'INSERT INTO "{user_id}" '
                                         f'VALUES ("{tovar_id}", "{count}", "{favourite}")')
@@ -75,7 +77,6 @@ class User:
             result = self.cursor.execute(
                 f'SELECT "favourite" FROM "{user_id}" '
                 f'WHERE "tovar_id"="{tovar_id}" AND "tovar_count"="0"').fetchall()
-            print(result)
             return result[0][0] if len(result) > 0 else None
 
 
@@ -90,6 +91,12 @@ class User:
                 return self.cursor.execute(f'INSERT INTO "{user_id}" '
                                            f'VALUES ("{tovar_id}", 0, 1)')
 
+    def favourite_list(self, user_id):
+        with self.connection:
+            result = self.cursor.execute(
+                f'SELECT "tovar_id" FROM "{user_id}" '
+                f'WHERE favourite="1"').fetchall()
+            return result if len(result) > 0 else []
 
 
 

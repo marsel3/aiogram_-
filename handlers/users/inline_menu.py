@@ -12,7 +12,6 @@ async def show_catalog(call: CallbackQuery):
 
 @dp.callback_query_handler(text=db_tovars.category_list())
 async def show_catalog(call: CallbackQuery):
-    print(call.data)
     await call.message.edit_text('Какой товар выберите?  😏',
                                  reply_markup=inline_kb_menu.tovar_markup(call.data))
 
@@ -52,11 +51,15 @@ async def show_catalog(call: CallbackQuery):
 
 @dp.callback_query_handler(text_startswith='setFavourite_')
 async def show_catalog(call: CallbackQuery):
-    print(call.data)
     tovar_id = call.data[13:]
-    print(tovar_id)
 
     db_users.set_favourite(tovar_id, call.from_user.id)
     await call.message.edit_reply_markup(inline_kb_menu.tovar_card_markup(tovar_id, call.from_user.id))
 
+
+@dp.callback_query_handler(text_startswith='delFavourite_')
+async def show_catalog(call: CallbackQuery):
+    tovar_id = call.data[13:]
+
+    print('эм...')
 

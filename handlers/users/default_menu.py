@@ -24,10 +24,8 @@ async def main(message: types.Message):
 
 @dp.message_handler(text=['⭐ Избранное', 'избранное'])
 async def main(message: types.Message):
-    # await message.delete()
-
-    await message.answer(f'Я твердо решил забыть о прошлом. Поэтому, если я должен вам денег — мне очень жаль.',
-                         reply_markup=inline_kb_menu.back_to_menu)
+    await message.answer('Ваш список избранного:',
+                         reply_markup=inline_kb_menu.favourite_markup(message.from_user.id))
 
 
 @dp.message_handler(text=['📲️Помощь', 'помощь'])

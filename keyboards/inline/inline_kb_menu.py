@@ -32,7 +32,6 @@ def catalog_markup():
 def tovar_markup(catalog):
     m1 = db_tovars.tovar(catalog)
     markup = InlineKeyboardMarkup()
-
     for i in m1:
         markup.add(InlineKeyboardButton(text=f'{i[1]}', callback_data=f'tovar_{i[0]}'))
     markup.add(InlineKeyboardButton(text='Назад в каталог', callback_data='back_to_catalog'))
@@ -41,7 +40,6 @@ def tovar_markup(catalog):
 
 
 def tovar_card_markup(tovar_id, user_id):
-    print(tovar_id)
     string = "Добавить в избранное"
     if db_users.favourite_info(tovar_id, user_id) == 1:
         string = "Убрать из избранного"
@@ -62,3 +60,19 @@ def tovar_card_markup(tovar_id, user_id):
     ]
     )
     return markup
+
+
+def favourite_markup(user_id):
+    m1 = db_users.favourite_list(user_id)
+    m2 = []
+    for i in m1:
+        m2.append(db_tovars.tovar_name(i[0]))
+    btns = []
+    for i in range(len(m1)):
+        btns.append([InlineKeyboardButton(text=f'{m2[i][0]}', callback_data=f'tovar_{m1[i][0]}'),
+                    InlineKeyboardButton(text='Убрать', callback_data=f'delFavourite_{m1[i][0]}')])
+    btns.append([InlineKeyboardButton(text='Назад', callback_data='back_to_menu')])
+    markup = InlineKeyboardMarkup(inline_keyboard=btns)
+
+    return markup
+
