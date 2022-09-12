@@ -21,23 +21,42 @@ async def show_catalog(call: CallbackQuery):
 async def show_catalog(call: CallbackQuery):
     await call.message.edit_text('C новой обновой заработает...')
 
-    # await call.message.edit_text('Вы вернулись в каталог',
-    #                           reply_markup=inline_kb_menu.tovar_markup(call.data))
+
+@dp.callback_query_handler(text='test')
+async def show_catalog(call: CallbackQuery):
+    await call.message.edit_text('C новой обновой заработает...')
+
 
 
 @dp.callback_query_handler(text_startswith='tovar_')
 async def show_catalog(call: CallbackQuery):
     tovar_id = call.data[6:]
 
+    markup = inline_kb_menu.tovar_card_markup(tovar_id, call.from_user.id)
     tovar_name, tovar_price, tovar_disc, tovar_photo = db_tovars.tovar_card(tovar_id)
-    await call.message.edit_text('Эт тип карточка товара')
-    await dp.bot.edit_message_caption(f'{tovar_name}\t{tovar_price} \n\n{tovar_disc}',
-                                    chat_id=call.message.chat.id,
-                                    message_id=call.message.message_id,
-                                    caption=tovar_photo)
+    await dp.bot.delete_message(call.message.chat.id, call.message.message_id)
+    await dp.bot.send_photo(chat_id=call.message.chat.id,
+                            photo=tovar_photo,
+                            caption=f'{tovar_name}: \t{tovar_price}₽ \n\n{tovar_disc}',
+                            reply_markup=markup)
 
-"""    await call.message.edit_media(f'{tovar_name}\t{tovar_price}'
-                                    f'\n\n{tovar_disc}', media=tovar_photo)
+@dp.callback_query_handler(text_startswith='basketAdd_')
+async def show_catalog(call: CallbackQuery):
+    tovar_id = call.data[10:]
 
-    # reply_markup=inline_kb_menu.tovar_card(call.data)
-    await call.message.edit_caption('s', )"""
+    db_users.add_tovar_(tovar_id, call.from_user.id, count=1)
+
+    await dp.bot.delete_message(call.message.chat.id, call.message.message_id)
+    await dp.bot.send_message(call.message.chat.id, 'Товар добавлен в корзину! :)')
+
+
+@dp.callback_query_handler(text_startswith='setFavourite_')
+async def show_catalog(call: CallbackQuery):
+    print(call.data)
+    tovar_id = call.data[13:]
+    print(tovar_id)
+
+    db_users.set_favourite(tovar_id, call.from_user.id)
+    await call.message.edit_reply_markup(inline_kb_menu.tovar_card_markup(tovar_id, call.from_user.id))
+
+

@@ -2,6 +2,7 @@ import sqlite3
 import datetime
 
 
+
 class DataBase:
     def __init__(self, db_file):
         self.connection = sqlite3.connect(db_file, check_same_thread=False)
@@ -22,11 +23,12 @@ class DataBase:
             result = self.cursor.execute(f'SELECT "tovar_id", "tovar_name" FROM "tovar" WHERE "category_id"="{category}"').fetchall()
             return result
 
-    def tovar_card(self, tovar):
+    def tovar_card(self, tovar_id):
         with self.connection:
             result = self.cursor.execute(f'SELECT "tovar_name", "tovar_price", "tovar_disc", "tovar_photo"'
-                                         f'FROM "tovar" WHERE "tovar_id"="{tovar}"').fetchall()[0]
+                                         f'FROM "tovar" WHERE "tovar_id"="{tovar_id}"').fetchall()[0]
             return result
+
 
 class User:
     def __init__(self, db_file):
@@ -38,9 +40,58 @@ class User:
             result = self.cursor.execute(f'SELECT * FROM "users" WHERE user_id="{user_id}"').fetchall()
             return bool(len(result))
 
+    def create_basket(self, user_id):
+        with self.connection:
+            result = self.cursor.execute(
+                f'CREATE TABLE IF NOT EXISTS "{user_id}" '
+                f'(tovar_id integer not null,'
+                f' tovar_count integer default 1,'
+                f' favourite integer not null default 0)')
+
     def add_user(self, user_id, user_username, user_fullname):
         with self.connection:
-            return self.cursor.execute("INSERT INTO 'users' ('user_id', 'user_username', 'user_fullname') VALUES (?, ?, ?)", (user_id, user_username, user_fullname,))
+            return self.cursor.execute("INSERT INTO 'users' ('user_id', 'user_username', 'user_fullname') "
+                                       "VALUES (?, ?, ?)", (user_id, user_username, user_fullname,))
+
+    def add_tovar_(self, tovar_id, user_id, count=0, favourite=0):
+        with self.connection:
+            result = self.cursor.execute(f'SELECT "favourite", "tovar_count" FROM "{user_id}" WHERE "tovar_id"="{tovar_id}"').fetchall()
+            if len(result) != 0:
+                if result[0][0] == 0:
+                    count += result[0][1]
+                    self.cursor.execute(f'UPDATE "{user_id}" '
+                                        f'SET "tovar_count"= "{count}" '
+                                        f'WHERE "tovar_id" = "{tovar_id}" AND "tovar_count" != "{0}" ')
+
+                    print(count)
+                    print('succes')
+                else:
+                    self.cursor.execute(f'INSERT INTO "{user_id}" '
+                                        f'VALUES ("{tovar_id}", "{count}", "{favourite}")')
+
+
+    def favourite_info(self, tovar_id, user_id):
+        with self.connection:
+            result = self.cursor.execute(
+                f'SELECT "favourite" FROM "{user_id}" '
+                f'WHERE "tovar_id"="{tovar_id}" AND "tovar_count"="0"').fetchall()
+            print(result)
+            return result[0][0] if len(result) > 0 else None
+
+
+    def set_favourite(self, tovar_id, user_id):
+        with self.connection:
+            fav = self.favourite_info(tovar_id, user_id)
+            if fav == 1:
+                return self.cursor.execute(f'DELETE FROM "{user_id}" '
+                                           f'WHERE "tovar_id" = "{tovar_id}" '
+                                           f'AND "tovar_count" = "0"')
+            elif fav == None:
+                return self.cursor.execute(f'INSERT INTO "{user_id}" '
+                                           f'VALUES ("{tovar_id}", 0, 1)')
+
+
+
 
     def user_info(self, user_id):
         with self.connection:
