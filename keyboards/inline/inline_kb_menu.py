@@ -1,6 +1,6 @@
 
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-from loader import db_tovars
+from loader import db_tovars, db_users
 
 main = InlineKeyboardMarkup(row_width=2,
                             inline_keyboard=[
@@ -16,6 +16,8 @@ back_to_menu = InlineKeyboardMarkup(inline_keyboard=[
          ]
     ]
 )
+
+
 
 
 def catalog_markup():
@@ -40,6 +42,25 @@ def tovar_markup(catalog):
     return markup
 
 
-def tovar_card(tovar_id):
-    pass
+def tovar_card_markup(tovar_id, user_id):
+    string = 'Добавить в избранное'
+    if db_users.favourite_info(tovar_id, user_id) == 1:
+        string = 'Убрать из избранного'
+    markup = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text='Добавить в корзину', callback_data=f'add_{tovar_id}')],
+            [InlineKeyboardButton(text=string, callback_data=f'favourite_add_{tovar_id}')],
+
+            [InlineKeyboardButton(text=f'➖', callback_data=f'back_to_catalog'),
+             InlineKeyboardButton(text=f'?', callback_data=f'back_to_catalog'),
+             InlineKeyboardButton(text=f'➕', callback_data=f'back_to_catalog')],
+
+            [InlineKeyboardButton(text='Назад', callback_data='back_to_menu')
+             ],
+        ]
+    )
+
+    return markup
+
+
+
 

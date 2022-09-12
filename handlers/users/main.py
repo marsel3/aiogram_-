@@ -10,6 +10,7 @@ async def main(message: types.Message):
         db_users.add_user(message.from_user.id,
                           message.from_user.username,
                           message.from_user.full_name)
+        db_users.create_basket(message.from_user.id)
 
     await message.delete()
     await message.answer(f'👋 Приветствую, {message.from_user.full_name}!'
