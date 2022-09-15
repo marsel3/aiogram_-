@@ -15,11 +15,8 @@ async def main(message: types.Message):
 @dp.message_handler(text=['🛍️ Корзина', 'корзина'])
 async def main(message: types.Message):
     # await message.delete()
-    await message.answer(f'\n— Сколько у нас денег?'
-                         f'\n— Три доллара.'
-                         f'\n— Блин, Картман, ты ж говорил, у нас куча денег!'
-                         f'\n— Да. Но я не учел тот факт, что слаб в математике.',
-                         reply_markup=inline_kb_menu.back_to_menu)
+    markup, string = inline_kb_menu.basket_markup(message.from_user.id)
+    await message.answer(string, reply_markup=markup)
 
 
 @dp.message_handler(text=['⭐ Избранное', 'избранное'])

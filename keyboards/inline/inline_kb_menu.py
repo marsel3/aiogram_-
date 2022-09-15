@@ -66,7 +66,7 @@ def favourite_markup(user_id):
     m1 = db_users.favourite_list(user_id)
     m2 = []
     for i in m1:
-        m2.append(db_tovars.tovar_name(i[0]))
+        m2.append(db_tovars.tovar_name_price(i[0]))
     btns = []
     for i in range(len(m1)):
         btns.append([InlineKeyboardButton(text=f'{m2[i][0]}', callback_data=f'tovar_{m1[i][0]}'),
@@ -76,3 +76,29 @@ def favourite_markup(user_id):
 
     return markup
 
+
+def basket_markup(user_id):
+    m1 = db_users.basket_list(user_id)
+    m2 = []
+    for i in m1:
+        m2.append(db_tovars.tovar_name_price(i[0]))
+    btns = []
+    for i in range(len(m1)):
+        btns.append([InlineKeyboardButton(text=f'{m2[i][0]}', callback_data=f'tovar_{m1[i][0]}'),
+                     InlineKeyboardButton(text=f'{m1[i][1]} шт.', callback_data=f'test'),
+                     InlineKeyboardButton(text=f'✏', callback_data=f'test')])
+    btns.append([InlineKeyboardButton(text='Оформить заказ', callback_data='test')])
+    btns.append([InlineKeyboardButton(text='Назад', callback_data='back_to_menu')])
+    markup = InlineKeyboardMarkup(inline_keyboard=btns)
+    string = 'Korzina: '
+    summ = 0
+    count = 1
+    if len(m2) > 0:
+        for i in range(0, len(m1)):
+            string += f"\n{count}.  {m2[i][0]} \n\t\t\t{m2[i][1]} * {m1[i][1]}  =  {m1[i][1] * m2[i][1]} рублей"
+            summ += (int(m2[i][1]) * int(m1[i][1]))
+            count += 1
+        string += '\n__________________' + '_' * len(str(summ))
+    string += f'\nИтого: {summ} рублей'
+
+    return markup, string

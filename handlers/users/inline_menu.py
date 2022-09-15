@@ -60,6 +60,9 @@ async def show_catalog(call: CallbackQuery):
 @dp.callback_query_handler(text_startswith='delFavourite_')
 async def show_catalog(call: CallbackQuery):
     tovar_id = call.data[13:]
+    user_id = call.from_user.id
 
-    print('эм...')
+    db_users.set_favourite(tovar_id, user_id)
+    await call.message.edit_reply_markup(inline_kb_menu.favourite_markup(user_id))
+
 

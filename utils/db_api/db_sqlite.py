@@ -29,9 +29,9 @@ class DataBase:
                                          f'FROM "tovar" WHERE "tovar_id"="{tovar_id}"').fetchall()[0]
             return result
 
-    def tovar_name(self, tovar_id):
+    def tovar_name_price(self, tovar_id):
         with self.connection:
-            result = self.cursor.execute(f'SELECT "tovar_name" FROM "tovar" WHERE "tovar_id" = "{tovar_id}" ').fetchall()
+            result = self.cursor.execute(f'SELECT "tovar_name", "tovar_price" FROM "tovar" WHERE "tovar_id" = "{tovar_id}" ').fetchall()
             return result[0] if len(result) > 0 else []
 
 class User:
@@ -97,6 +97,14 @@ class User:
                 f'SELECT "tovar_id" FROM "{user_id}" '
                 f'WHERE favourite="1"').fetchall()
             return result if len(result) > 0 else []
+
+    def basket_list(self, user_id):
+        with self.connection:
+            result = self.cursor.execute(
+                f'SELECT "tovar_id", "tovar_count" FROM "{user_id}" '
+                f'WHERE favourite="0" and "tovar_count"!=0').fetchall()
+            return result if len(result) > 0 else []
+
 
 
 
