@@ -50,6 +50,7 @@ class User:
                 f'CREATE TABLE IF NOT EXISTS "{user_id}" '
                 f'(tovar_id integer not null,'
                 f' tovar_count integer default 1,'
+                f' tovar_price integer not null'
                 f' favourite integer not null default 0)')
 
     def add_user(self, user_id, user_username, user_fullname):
@@ -57,7 +58,7 @@ class User:
             return self.cursor.execute("INSERT INTO 'users' ('user_id', 'user_username', 'user_fullname') "
                                        "VALUES (?, ?, ?)", (user_id, user_username, user_fullname,))
 
-    def add_tovar_(self, tovar_id, user_id, count=0, favourite=0):
+    def add_tovar_(self, tovar_id, user_id, tovar_price=0, count=0, favourite=0):
         with self.connection:
             result = self.cursor.execute(f'SELECT "favourite", "tovar_count" FROM "{user_id}" WHERE "tovar_id"="{tovar_id}"').fetchall()
             if len(result) != 0:
@@ -69,16 +70,7 @@ class User:
 
                 else:
                     self.cursor.execute(f'INSERT INTO "{user_id}" '
-                                        f'VALUES ("{tovar_id}", "{count}", "{favourite}")')
-
-
-    def favourite_info(self, tovar_id, user_id):
-        with self.connection:
-            result = self.cursor.execute(
-                f'SELECT "favourite" FROM "{user_id}" '
-                f'WHERE "tovar_id"="{tovar_id}" AND "tovar_count"="0"').fetchall()
-            return result[0][0] if len(result) > 0 else None
-
+                                        f'VALUES ("{tovar_id}", "{count}", "{tovar_price}" "{favourite}")')
 
     def set_favourite(self, tovar_id, user_id):
         with self.connection:
@@ -90,6 +82,15 @@ class User:
             elif fav == None:
                 return self.cursor.execute(f'INSERT INTO "{user_id}" '
                                            f'VALUES ("{tovar_id}", 0, 1)')
+
+
+    def favourite_info(self, tovar_id, user_id):
+        with self.connection:
+            result = self.cursor.execute(
+                f'SELECT "favourite" FROM "{user_id}" '
+                f'WHERE "tovar_id"="{tovar_id}" AND "tovar_count"="0"').fetchall()
+            return result[0][0] if len(result) > 0 else None
+
 
     def favourite_list(self, user_id):
         with self.connection:

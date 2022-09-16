@@ -11,7 +11,7 @@ async def main(message: types.Message):
                           message.from_user.username,
                           message.from_user.full_name)
         db_users.create_basket(message.from_user.id)
-
+        print('kek')
     await message.delete()
     await message.answer(f'👋 Приветствую, {message.from_user.full_name}!'
                          f'\nНажимай на каталог и начинай собирать заказ 😉',

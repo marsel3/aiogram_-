@@ -87,7 +87,7 @@ def basket_markup(user_id):
         btns.append([InlineKeyboardButton(text=f'{m2[i][0]}', callback_data=f'tovar_{m1[i][0]}'),
                      InlineKeyboardButton(text=f'{m1[i][1]} шт.', callback_data=f'test'),
                      InlineKeyboardButton(text=f'✏', callback_data=f'test')])
-    btns.append([InlineKeyboardButton(text='Оформить заказ', callback_data='test')])
+    btns.append([InlineKeyboardButton(text='Оформить заказ', callback_data='pay')])
     btns.append([InlineKeyboardButton(text='Назад', callback_data='back_to_menu')])
     markup = InlineKeyboardMarkup(inline_keyboard=btns)
     string = 'Korzina: '

@@ -1,6 +1,6 @@
 from aiogram import types
 from aiogram.types import CallbackQuery
-
+from states import State
 from loader import dp, db_tovars, db_users
 from keyboards.inline import inline_kb_menu
 
@@ -8,6 +8,7 @@ from keyboards.inline import inline_kb_menu
 @dp.message_handler(text=['🗂️ Каталог', 'каталог', "Назад в каталог"])
 async def main(message: types.Message):
     #await message.delete()
+
     await message.answer(f'Вы перешли в каталог, выберите категорию нужного вам товара.',
                          reply_markup=inline_kb_menu.catalog_markup())
 

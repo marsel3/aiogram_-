@@ -1,7 +1,8 @@
 from aiogram.types import CallbackQuery
 
-from loader import dp, db_tovars, db_users
 
+from loader import dp, db_tovars, db_users
+from states import State
 from keyboards.inline import inline_kb_menu
 
 
