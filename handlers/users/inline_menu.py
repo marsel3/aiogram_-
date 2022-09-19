@@ -27,7 +27,6 @@ async def show_catalog(call: CallbackQuery):
     await call.message.edit_text('C новой обновой заработает...')
 
 
-
 @dp.callback_query_handler(text_startswith='tovar_')
 async def show_catalog(call: CallbackQuery):
     tovar_id = call.data[6:]
@@ -40,11 +39,14 @@ async def show_catalog(call: CallbackQuery):
                             caption=f'{tovar_name}: \t{tovar_price}₽ \n\n{tovar_disc}',
                             reply_markup=markup)
 
+
 @dp.callback_query_handler(text_startswith='basketAdd_')
 async def show_catalog(call: CallbackQuery):
     tovar_id = call.data[10:]
+    tovar_name = db_tovars.tovar_name(tovar_id)
+    tovar_price = db_tovars.tovar_price(tovar_id)
 
-    db_users.add_tovar_(tovar_id, call.from_user.id, count=1)
+    db_users.add_tovar_(tovar_id, call.from_user.id, tovar_name, tovar_price, count=1)
 
     await dp.bot.delete_message(call.message.chat.id, call.message.message_id)
     await dp.bot.send_message(call.message.chat.id, 'Товар добавлен в корзину! :)')
@@ -54,7 +56,8 @@ async def show_catalog(call: CallbackQuery):
 async def show_catalog(call: CallbackQuery):
     tovar_id = call.data[13:]
 
-    db_users.set_favourite(tovar_id, call.from_user.id)
+    tovar_name = db_tovars.tovar_name(tovar_id)
+    db_users.set_favourite(tovar_id, tovar_name, call.from_user.id)
     await call.message.edit_reply_markup(inline_kb_menu.tovar_card_markup(tovar_id, call.from_user.id))
 
 
@@ -62,8 +65,9 @@ async def show_catalog(call: CallbackQuery):
 async def show_catalog(call: CallbackQuery):
     tovar_id = call.data[13:]
     user_id = call.from_user.id
+    tovar_name = db_tovars.tovar_name(tovar_id)
 
-    db_users.set_favourite(tovar_id, user_id)
+    db_users.set_favourite(tovar_id, user_id, tovar_name)
     await call.message.edit_reply_markup(inline_kb_menu.favourite_markup(user_id))
 
 

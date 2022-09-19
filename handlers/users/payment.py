@@ -3,7 +3,7 @@ from aiogram.types.message import ContentType
 from aiogram.types import CallbackQuery
 
 from data.config import PAYMENT_TOKEN
-from loader import dp
+from loader import dp, db_users
 
 PRICES = [
     LabeledPrice(label='Ноутбук', amount=1000),
@@ -29,21 +29,29 @@ PICKUP_SHIPPING_OPTION = ShippingOption(
 )
 PICKUP_SHIPPING_OPTION.add(LabeledPrice('Самовывоз в Сантк-Петербурге', 1000))
 
+
 @dp.callback_query_handler(text='pay')
 async def buy_process(call: CallbackQuery):
+    PAYMENTS = []
+    for i in db_users.basket_list(call.from_user.id):
+        print(i)
+        print(i[2] * i[3] * 100)
+        PAYMENTS.append(LabeledPrice(label=i[1], amount=i[2] * i[3] * 100))
+
     await dp.bot.delete_message(call.message.chat.id, call.message.message_id)
     await dp.bot.send_invoice(
-    chat_id = call.message.chat.id,
-        title='Оформить заказ',
-        description='самовывоз',
-        provider_token=PAYMENT_TOKEN,
-        currency='RUB',
-        need_email=True,
-        need_phone_number=True,
-        is_flexible=True,
-        prices=[LabeledPrice("Шрек", 29000)],
-        start_parameter='example',
-        payload='some_invoice')
+            chat_id=call.message.chat.id,
+            title='Заказ №190922',
+            description='самовывоз',
+            invoice_payload='true',
+            provider_token=PAYMENT_TOKEN,
+            currency='RUB',
+            need_email=True,
+            need_phone_number=True,
+            is_flexible=True,
+            prices=PRICES,
+            start_parameter='example',
+            payload='some_invoice')
 
 
 @dp.shipping_query_handler(lambda q: True)
@@ -57,7 +65,9 @@ async def shipping_process(shipping_query: ShippingQuery):
 
     shipping_options = [SUPERSPEED_SHIPPING_OPTION]
 
-    if shipping_query.shipping_address.country_code == 'RU':
+    if shipping_query.shipping_address.city == 'Казань':
+        shipping_options.append(PICKUP_SHIPPING_OPTION)
+    elif shipping_query.shipping_address.country_code == 'RU':
         shipping_options.append(POST_SHIPPING_OPTION)
 
         if shipping_query.shipping_address.city == 'Санкт-Петербург':
