@@ -29,10 +29,21 @@ class DataBase:
                                          f'FROM "tovar" WHERE "tovar_id"="{tovar_id}"').fetchall()[0]
             return result
 
-    def tovar_name_price(self, tovar_id):
+    def tovar_name(self, tovar_id):
         with self.connection:
-            result = self.cursor.execute(f'SELECT "tovar_name", "tovar_price" FROM "tovar" WHERE "tovar_id" = "{tovar_id}" ').fetchall()
+            result = self.cursor.execute(f'SELECT "tovar_name" FROM "tovar" WHERE "tovar_id" = "{tovar_id}" ').fetchall()[0]
             return result[0] if len(result) > 0 else []
+
+    def category_id(self, tovar_id):
+        with self.connection:
+            result = self.cursor.execute(f'SELECT "category_id" FROM "tovar" WHERE "tovar_id" = "{tovar_id}" ').fetchall()[0]
+            return result[0] if len(result) > 0 else []
+
+    def tovar_price(self, tovar_id):
+        with self.connection:
+            result = self.cursor.execute(f'SELECT "tovar_price" FROM "tovar" WHERE "tovar_id" = "{tovar_id}" ').fetchall()[0]
+            return result[0] if len(result) > 0 else []
+
 
 class User:
     def __init__(self, db_file):
@@ -48,31 +59,39 @@ class User:
         with self.connection:
             result = self.cursor.execute(
                 f'CREATE TABLE IF NOT EXISTS "{user_id}" '
-                f'(tovar_id integer not null,'
-                f' tovar_count integer default 1,'
-                f' tovar_price integer not null'
-                f' favourite integer not null default 0)')
+                f'(tovar_id integer not null, '
+                f'tovar_name string, '
+                f'tovar_price real, '
+                f'tovar_count integer, '
+                f'favourite integer not null default 0)')
 
     def add_user(self, user_id, user_username, user_fullname):
         with self.connection:
-            return self.cursor.execute("INSERT INTO 'users' ('user_id', 'user_username', 'user_fullname') "
-                                       "VALUES (?, ?, ?)", (user_id, user_username, user_fullname,))
+            return self.cursor.execute("INSERT INTO 'users' ('user_id', 'user_username', 'user_fullname', 'total_amount') "
+                                       "VALUES (?, ?, ?, ?)", (user_id, user_username, user_fullname, 0))
 
-    def add_tovar_(self, tovar_id, user_id, tovar_price=0, count=0, favourite=0):
+    def total_amount(self, user_id):
         with self.connection:
-            result = self.cursor.execute(f'SELECT "favourite", "tovar_count" FROM "{user_id}" WHERE "tovar_id"="{tovar_id}"').fetchall()
+            return self.cursor.execute(f'SELECT "total_amount" FROM "users" WHERE "user_id"="{user_id}"').fetchall()[0][0]
+
+    def basket_add(self, tovar_id, user_id, tovar_name, tovar_price=0, count=0, favourite=0):
+        with self.connection:
+            result = self.cursor.execute(f'SELECT "tovar_count" FROM "{user_id}"'
+                                         f' WHERE "tovar_id"="{tovar_id}" '
+                                         f'AND "favourite"=0').fetchall()
             if len(result) != 0:
-                if result[0][0] == 0:
-                    count += result[0][1]
-                    self.cursor.execute(f'UPDATE "{user_id}" '
-                                        f'SET "tovar_count"= "{count}" '
-                                        f'WHERE "tovar_id" = "{tovar_id}" AND "tovar_count" != "{0}" ')
+                 count += result[0][0]
+                 self.cursor.execute(f'UPDATE "{user_id}" '
+                                     f'SET "tovar_count"= "{count}" '
+                                     f'WHERE "tovar_id" = "{tovar_id}" AND "tovar_count" != "{0}" ')
 
-                else:
-                    self.cursor.execute(f'INSERT INTO "{user_id}" '
-                                        f'VALUES ("{tovar_id}", "{count}", "{tovar_price}" "{favourite}")')
+            else:
+                self.cursor.execute(f'INSERT INTO "{user_id}" '
+                                    f'VALUES ("{tovar_id}", "{tovar_name}", "{tovar_price}", "{count}", 0'
+                                    f''
+                                    f')')
 
-    def set_favourite(self, tovar_id, user_id):
+    def set_favourite(self, tovar_id, user_id, tovar_name):
         with self.connection:
             fav = self.favourite_info(tovar_id, user_id)
             if fav == 1:
@@ -81,8 +100,7 @@ class User:
                                            f'AND "tovar_count" = "0"')
             elif fav == None:
                 return self.cursor.execute(f'INSERT INTO "{user_id}" '
-                                           f'VALUES ("{tovar_id}", 0, 1)')
-
+                                           f'VALUES ("{tovar_id}", "{tovar_name}", 0, 0, 1)')
 
     def favourite_info(self, tovar_id, user_id):
         with self.connection:
@@ -95,45 +113,22 @@ class User:
     def favourite_list(self, user_id):
         with self.connection:
             result = self.cursor.execute(
-                f'SELECT "tovar_id" FROM "{user_id}" '
+                f'SELECT "tovar_id", "tovar_name" FROM "{user_id}" '
                 f'WHERE favourite="1"').fetchall()
             return result if len(result) > 0 else []
 
     def basket_list(self, user_id):
         with self.connection:
             result = self.cursor.execute(
-                f'SELECT "tovar_id", "tovar_count" FROM "{user_id}" '
+                f'SELECT "tovar_id", "tovar_name", "tovar_price", "tovar_count" FROM "{user_id}" '
                 f'WHERE favourite="0" and "tovar_count"!=0').fetchall()
             return result if len(result) > 0 else []
 
-
-
-
-    def user_info(self, user_id):
+    def clean_favourite(self, user_id):
         with self.connection:
-            return self.cursor.execute(f'SELECT * FROM "users" WHERE user_id={user_id}').fetchall()[0]
+            return self.cursor.execute(f'DELETE FROM "{user_id}" WHERE "favourite" = 1')
 
-    def set_status(self, user_id):
+    def clean_basket(self, user_id):
         with self.connection:
-            status = 1 if self.user_status(user_id) == 0 else 0
-            return self.cursor.execute('UPDATE "users" SET "status" = ? WHERE "user_id" = ?', (status, user_id,))
-
-    def user_status(self, user_id):
-        with self.connection:
-            result = self.cursor.execute(f'SELECT "status" FROM "users" WHERE user_id="{user_id}"').fetchmany(1)
-            return int(result[0][0])
-
-    def user_demo(self, user_id):
-        with self.connection:
-            result = self.cursor.execute(f'SELECT "demo" FROM "users" WHERE user_id="{user_id}"').fetchmany(1)
-            return int(result[0][0])
-
-    def set_demo(self, user_id, demo):
-        with self.connection:
-            return self.cursor.execute('UPDATE "users" SET "demo" = ? WHERE "user_id" = ?', (demo, user_id,))
-
-    def edit_demo(self, user_id):
-        with self.connection:
-            demo = 10 if self.user_demo(user_id) == 0 else 0
-            return self.cursor.execute('UPDATE "users" SET "demo" = ? WHERE "user_id" = ?', (demo, user_id,))
+            return self.cursor.execute(f'DELETE FROM "{user_id}" WHERE "favourite" = 0')
 

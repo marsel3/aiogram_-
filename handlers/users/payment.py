@@ -4,7 +4,7 @@ from aiogram.types import CallbackQuery
 
 from loader import db_tovars, db_users
 from data.config import PAYMENT_TOKEN
-from loader import dp
+from loader import dp, db_users
 
 
 SUPERSPEED_SHIPPING_OPTION = ShippingOption(
@@ -18,6 +18,8 @@ POST_SHIPPING_OPTION = ShippingOption(
 )
 POST_SHIPPING_OPTION.add(LabeledPrice('Картонная коробка', 1700))
 POST_SHIPPING_OPTION.add(LabeledPrice('Срочное отправление!', 2500))
+POST_SHIPPING_OPTION.add(LabeledPrice('Кортонная коробка', 1000))
+POST_SHIPPING_OPTION.add(LabeledPrice('Срочное отправление!', 1000))
 
 PICKUP_SHIPPING_OPTION = ShippingOption(
     id='pickup',
@@ -30,21 +32,24 @@ PICKUP_SHIPPING_OPTION.add(LabeledPrice('Самовывоз в Казани', 10
 async def buy_process(call: CallbackQuery):
     PRICES = []
     for i in db_users.basket_list(call.from_user.id):
-        print(i[2] * i[3], type(i[2]))
         PRICES.append(LabeledPrice(i[1], int(i[2] * i[3] * 100)))
     await dp.bot.delete_message(call.message.chat.id, call.message.message_id)
-    await dp.bot.send_invoice(
-    chat_id = call.message.chat.id,
-        title='Заказ № ???',
-        description='самовывоз',
-        provider_token=PAYMENT_TOKEN,
-        currency='RUB',
-        need_email=True,
-        need_phone_number=True,
-        is_flexible=True,
-        prices=PRICES,
-        start_parameter='example',
-        payload='some_invoice')
+    try:
+        await dp.bot.send_invoice(
+            chat_id = call.message.chat.id,
+            title='Заказ № ???',
+            description='самовывоз',
+            provider_token=PAYMENT_TOKEN,
+            currency='RUB',
+            need_email=True,
+            need_phone_number=True,
+            is_flexible=True,
+            prices=PRICES,
+            start_parameter='example',
+            payload='some_invoice')
+    except:
+        await dp.bot.send_message(chat_id = call.message.chat.id,
+                                  text='Минимальная сумма заказа 1$')
 
 
 @dp.shipping_query_handler(lambda q: True)

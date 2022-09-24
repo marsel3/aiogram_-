@@ -34,6 +34,12 @@ async def main(message: types.Message):
 @dp.message_handler(text=['👤 Профиль', 'профиль'])
 async def main(message: types.Message):
     #await message.delete()
-    await message.answer(f'𝐍𝐨𝐰 𝐥𝐨𝐚𝐝𝐢𝐧𝐠. . .',
+    print(message.from_user.id)
+    amount = db_users.total_amount(message.from_user.id)
+    sale = 0
+    await message.answer(f'Профиль\nВаше Имя: {message.from_user.full_name}'
+                         f'\n\nВаша статистика'
+                         f'\nОбщая сумма покупок: {amount}₽'
+                         f'\n\nПроцент скидки: {sale} %',
                          reply_markup=inline_kb_menu.back_to_menu)
 
