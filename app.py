@@ -9,7 +9,6 @@ import filters
 
 
 async def on_startup(dp):
-
     filters.setup(dp)
     await on_startup_notify(dp)
     await set_default_commands(dp)

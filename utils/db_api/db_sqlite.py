@@ -50,6 +50,11 @@ class User:
         self.connection = sqlite3.connect(db_file, check_same_thread=False)
         self.cursor = self.connection.cursor()
 
+    def user_fullname(self, user_id):
+        with self.connection:
+            result = self.cursor.execute(f'SELECT "user_fullname" FROM "users" WHERE "user_id" = "{user_id}" ').fetchall()[0]
+            return result[0] if len(result) > 0 else []
+
     def user_exists(self, user_id):
         with self.connection:
             result = self.cursor.execute(f'SELECT * FROM "users" WHERE user_id="{user_id}"').fetchall()
