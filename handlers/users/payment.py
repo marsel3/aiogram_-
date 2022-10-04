@@ -80,6 +80,7 @@ async def shipping_process(shipping_query: ShippingQuery):
 async def checkout_process(pre_checkout_query: PreCheckoutQuery):
     await dp.bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True)
 
+
 @dp.message_handler(content_types=ContentType.SUCCESSFUL_PAYMENT)
 async def successful_payment(message: Message):
     await dp.bot.send_message(
