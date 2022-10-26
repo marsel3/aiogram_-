@@ -1,6 +1,4 @@
 import sqlite3
-import datetime
-
 
 
 class DataBase:
@@ -34,14 +32,25 @@ class DataBase:
             result = self.cursor.execute(f'SELECT "tovar_name" FROM "tovar" WHERE "tovar_id" = "{tovar_id}" ').fetchall()[0]
             return result[0] if len(result) > 0 else []
 
+    def tovar_price(self, tovar_id):
+        with self.connection:
+            result = self.cursor.execute(f'SELECT "tovar_price" FROM "tovar" WHERE "tovar_id" = "{tovar_id}" ').fetchall()[0]
+            return result[0] if len(result) > 0 else []
+
+    def tovar_search(self, search):
+        with self.connection:
+            result = self.cursor.execute(f'SELECT "tovar_name", "tovar_id" '
+                                         f'FROM "tovar" WHERE "tovar_name" LIKE "%{search}%"').fetchall()
+            return result
+
     def category_id(self, tovar_id):
         with self.connection:
             result = self.cursor.execute(f'SELECT "category_id" FROM "tovar" WHERE "tovar_id" = "{tovar_id}" ').fetchall()[0]
             return result[0] if len(result) > 0 else []
 
-    def tovar_price(self, tovar_id):
+    def category_name(self, category_id):
         with self.connection:
-            result = self.cursor.execute(f'SELECT "tovar_price" FROM "tovar" WHERE "tovar_id" = "{tovar_id}" ').fetchall()[0]
+            result = self.cursor.execute(f'SELECT "category_name" FROM "category" WHERE "category_id" = "{category_id}" ').fetchall()[0]
             return result[0] if len(result) > 0 else []
 
 
@@ -79,22 +88,22 @@ class User:
         with self.connection:
             return self.cursor.execute(f'SELECT "total_amount" FROM "users" WHERE "user_id"="{user_id}"').fetchall()[0][0]
 
-    def basket_add(self, tovar_id, user_id, tovar_name, tovar_price=0, count=0, favourite=0):
+    def basket_add(self, tovar_id, user_id, tovar_name, tovar_price=0, count=0):
         with self.connection:
             result = self.cursor.execute(f'SELECT "tovar_count" FROM "{user_id}"'
                                          f' WHERE "tovar_id"="{tovar_id}" '
                                          f'AND "favourite"=0').fetchall()
             if len(result) != 0:
-                 count += result[0][0]
-                 self.cursor.execute(f'UPDATE "{user_id}" '
-                                     f'SET "tovar_count"= "{count}" '
-                                     f'WHERE "tovar_id" = "{tovar_id}" AND "tovar_count" != "{0}" ')
-
+                self.basket_set(tovar_id, user_id, count + result[0][0])
             else:
                 self.cursor.execute(f'INSERT INTO "{user_id}" '
-                                    f'VALUES ("{tovar_id}", "{tovar_name}", "{tovar_price}", "{count}", 0'
-                                    f''
-                                    f')')
+                                    f'VALUES ("{tovar_id}", "{tovar_name}", "{tovar_price}", "{count}", 0)')
+
+    def basket_set(self, tovar_id, user_id, count):
+        with self.connection:
+            self.cursor.execute(f'UPDATE "{user_id}" '
+                                f'SET "tovar_count"= "{count}" '
+                                f'WHERE "tovar_id" = "{tovar_id}" AND "tovar_count" != "{0}" ')
 
     def set_favourite(self, tovar_id, user_id, tovar_name):
         with self.connection:
@@ -113,7 +122,6 @@ class User:
                 f'SELECT "favourite" FROM "{user_id}" '
                 f'WHERE "tovar_id"="{tovar_id}" AND "tovar_count"="0"').fetchall()
             return result[0][0] if len(result) > 0 else None
-
 
     def favourite_list(self, user_id):
         with self.connection:
@@ -136,4 +144,5 @@ class User:
     def clean_basket(self, user_id):
         with self.connection:
             return self.cursor.execute(f'DELETE FROM "{user_id}" WHERE "favourite" = 0')
+
 

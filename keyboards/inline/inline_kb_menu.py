@@ -20,13 +20,14 @@ back_to_menu = InlineKeyboardMarkup(inline_keyboard=[
 
 def catalog_markup():
     m1 = db_tovars.category()
-    markup = InlineKeyboardMarkup()
 
+    btns = []
+    btns.append([InlineKeyboardButton(text='Поиск товара', callback_data='search')])
     for i in m1:
-        markup.add(InlineKeyboardButton(text=f'{i[1]}', callback_data=f'{i[0]}'))
-    markup.add(InlineKeyboardButton(text='Назад', callback_data='back_to_menu'))
+        btns.append([InlineKeyboardButton(text=f'{i[1]}', callback_data=f'{i[0]}')])
+    btns.append([InlineKeyboardButton(text='Назад', callback_data='back_to_menu')])
 
-    return markup
+    return InlineKeyboardMarkup(inline_keyboard=btns)
 
 
 def tovar_markup(catalog):
@@ -48,14 +49,11 @@ def tovar_card_markup(tovar_id, user_id):
     markup = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text=string, callback_data=f'setFavourite_{tovar_id}')
          ],
-
-         #[InlineKeyboardButton(text=f'➖', callback_data=f'test'),
-         #InlineKeyboardButton(text=f'?', callback_data=f'test'),
-         #InlineKeyboardButton(text=f'➕', callback_data=f'test')],
-
+         # [InlineKeyboardButton(text=f'➖', callback_data=f'test'),
+         # InlineKeyboardButton(text=f'?', callback_data=f'test'),
+         # InlineKeyboardButton(text=f'➕', callback_data=f'test')],
         [InlineKeyboardButton(text='Добавить в корзину', callback_data=f'basketAdd_{tovar_id}')
          ],
-
         [InlineKeyboardButton(text='Назад', callback_data=f'back_to_tovars_{category_id}')
          ],
     ]
@@ -83,21 +81,32 @@ def basket_markup(user_id):
     if len(m1) > 0:
         for i in m1:
             btns.append([InlineKeyboardButton(text=f'{i[1]}', callback_data=f'tovar_{i[0]}'),
-                         InlineKeyboardButton(text=f'{i[3]} шт.', callback_data=f'test'),
-                         InlineKeyboardButton(text=f'✏', callback_data=f'test')])
+                         InlineKeyboardButton(text=f'{i[3]} шт.', callback_data=f'setCount_{i[0]}'),
+                         InlineKeyboardButton(text=f'✏', callback_data=f'setCount_{i[0]}')])
         btns.append([InlineKeyboardButton(text='Очистить корзину', callback_data='cleanBasket')])
         btns.append([InlineKeyboardButton(text='Оформить заказ', callback_data='pay')])
     btns.append([InlineKeyboardButton(text='Назад', callback_data='back_to_menu')])
     markup = InlineKeyboardMarkup(inline_keyboard=btns)
-    string = 'Korzina: '
+    string = f'Корзина.\n'
     summ = 0
     count = 1
     if len(m1) > 0:
         for i in m1:
-            string += f"\n{count}.  {i[1]} \n\t\t\tЦена: {i[2]} * {i[3]}  =  {i[2] * i[3]} рублей"
+            string += f'\n\n{count}.  "{i[1]}" \n\t\t\tЦена: {i[2]} × {i[3]}  =  {i[2] * i[3]} рублей'
+
+            #string += f"\n{count}. {i[1]}{i[3]}ед. ({i[2] * i[3]} рублей)"
             summ += i[2] * i[3]
             count += 1
         string += '\n__________________' + '_' * len(str(summ))
+
     string += f'\nИтого: {summ} рублей'
 
     return markup, string
+
+
+def search_markup(m1):
+    btns = []
+    for i in m1:
+        btns.append([InlineKeyboardButton(text=f'{i[0]}', callback_data=f'tovar_{i[1]}')])
+    btns.append([InlineKeyboardButton(text='Назад', callback_data=f'back_to_menu')])
+    return InlineKeyboardMarkup(inline_keyboard=btns)

@@ -9,7 +9,8 @@ main = ReplyKeyboardMarkup(
             ],
             [
                 KeyboardButton(text='⭐ Избранное'),
-                KeyboardButton(text='📲️Помощь'),
+                #KeyboardButton(text='📲️Помощь'),
+                KeyboardButton(text="📲️Контакты"),
             ],
             [
             KeyboardButton(text='👤 Профиль'),

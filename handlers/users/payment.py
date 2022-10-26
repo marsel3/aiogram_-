@@ -3,7 +3,6 @@ from aiogram.types.message import ContentType
 from aiogram.types import CallbackQuery
 from data.config import admins_id
 
-from loader import db_tovars, db_users
 from data.config import PAYMENT_TOKEN
 from loader import dp, db_users
 
@@ -69,12 +68,12 @@ async def shipping_process(shipping_query: ShippingQuery):
     elif shipping_query.shipping_address.country_code == 'RU':
         shipping_options.append(POST_SHIPPING_OPTION)
 
-
     await dp.bot.answer_shipping_query(
         shipping_query.id,
         ok=True,
         shipping_options=shipping_options
     )
+
 
 @dp.pre_checkout_query_handler(lambda q: True)
 async def checkout_process(pre_checkout_query: PreCheckoutQuery):
@@ -85,7 +84,7 @@ async def checkout_process(pre_checkout_query: PreCheckoutQuery):
 async def successful_payment(message: Message):
     await dp.bot.send_message(
         message.chat.id,
-        'Заказ оплачен, и уже начал собираться)'
+        'Заказ оплачен, и уже начал собираться)\nСкоро с вами свяжется наш менеджер!'
     )
     print(message.successful_payment)
     user_name = db_users.user_fullname(message.from_user.id)
