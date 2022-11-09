@@ -17,6 +17,13 @@ back_to_menu = InlineKeyboardMarkup(inline_keyboard=[
     ]
 )
 
+admin_panel = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text='Редактировать статусы', callback_data='admin_start')],
+        [InlineKeyboardButton(text='Назад', callback_data='back_to_menu')]
+    ]
+)
+
+
 
 def catalog_markup():
     m1 = db_tovars.category()

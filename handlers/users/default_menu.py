@@ -1,6 +1,4 @@
 from aiogram import types
-from aiogram.types import CallbackQuery
-from states import State
 from loader import dp, db_tovars, db_users
 from keyboards.inline import inline_kb_menu
 
@@ -27,8 +25,7 @@ async def show_favourite(message: types.Message):
 #@dp.message_handler(text=['📲️Помощь', 'помощь'])
 @dp.message_handler(text=['📲️Контакты', 'контакты'])
 async def show_contact(message: types.Message):
-    #await message.delete()
-
+    # await message.delete()
     await dp.bot.send_location(message.chat.id,
                                latitude=55.78556,
                                longitude=49.12472)
