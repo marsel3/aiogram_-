@@ -16,7 +16,7 @@ async def admin(messsage: types.Message):
                           reply_markup=inline_kb_menu.admin_panel)
 
 
-@dp.callback_query_handler(text='admin_start')
-async def register(call: CallbackQuery):
+@dp.callback_query_handler(text='admin_catalog')
+async def admin_catalog(call: CallbackQuery):
     await call.message.edit_text('Введите id пользователя')
     await state.user_ad.set()

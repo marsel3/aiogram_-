@@ -1,6 +1,6 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from loader import db_tovars, db_users
-
+from data.config import admins_id
 
 main = InlineKeyboardMarkup(row_width=2,
                             inline_keyboard=[
@@ -18,7 +18,8 @@ back_to_menu = InlineKeyboardMarkup(inline_keyboard=[
 )
 
 admin_panel = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text='Редактировать статусы', callback_data='admin_start')],
+        [InlineKeyboardButton(text='Каталог', callback_data='admin_catalog')],
+        [InlineKeyboardButton(text='Товары', callback_data='admin_tovar')],
         [InlineKeyboardButton(text='Назад', callback_data='back_to_menu')]
     ]
 )
@@ -49,23 +50,20 @@ def tovar_markup(catalog):
 
 def tovar_card_markup(tovar_id, user_id):
     category_id = db_tovars.category_id(tovar_id)
+    btns = []
     string = "Добавить в избранное"
     if db_users.favourite_info(tovar_id, user_id) == 1:
         string = "Убрать из избранного"
-
-    markup = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text=string, callback_data=f'setFavourite_{tovar_id}')
-         ],
+    if user_id in admins_id:
+        btns.append([InlineKeyboardButton(text='Изменить товар', callback_data=f'adminEditTovar_{tovar_id}'),
+                    InlineKeyboardButton(text='Удалить товар', callback_data=f'adminDeleteTovar_{tovar_id}')])
+    btns.append([InlineKeyboardButton(text=string, callback_data=f'setFavourite_{tovar_id}')])
          # [InlineKeyboardButton(text=f'➖', callback_data=f'test'),
          # InlineKeyboardButton(text=f'?', callback_data=f'test'),
          # InlineKeyboardButton(text=f'➕', callback_data=f'test')],
-        [InlineKeyboardButton(text='Добавить в корзину', callback_data=f'basketAdd_{tovar_id}')
-         ],
-        [InlineKeyboardButton(text='Назад', callback_data=f'back_to_tovars_{category_id}')
-         ],
-    ]
-    )
-    return markup
+    btns.append([InlineKeyboardButton(text='Добавить в корзину', callback_data=f'basketAdd_{tovar_id}')])
+    btns.append([InlineKeyboardButton(text='Назад', callback_data=f'back_to_tovars_{category_id}')])
+    return InlineKeyboardMarkup(inline_keyboard=btns)
 
 
 def favourite_markup(user_id):
