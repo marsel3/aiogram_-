@@ -2,13 +2,6 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from loader import db_tovars, db_users
 from data.config import admins_id
 
-main = InlineKeyboardMarkup(row_width=2,
-                            inline_keyboard=[
-                                [InlineKeyboardButton(text='Запустить калькулятор', callback_data='start_process')
-                                 ],
-                                [InlineKeyboardButton(text='☎️ Служба поддержки', callback_data='help')
-                                 ]
-                            ])
 
 
 back_to_menu = InlineKeyboardMarkup(inline_keyboard=[
@@ -16,14 +9,6 @@ back_to_menu = InlineKeyboardMarkup(inline_keyboard=[
          ]
     ]
 )
-
-admin_panel = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text='Каталог', callback_data='admin_catalog')],
-        [InlineKeyboardButton(text='Товары', callback_data='admin_tovar')],
-        [InlineKeyboardButton(text='Назад', callback_data='back_to_menu')]
-    ]
-)
-
 
 
 def catalog_markup():
