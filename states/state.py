@@ -10,3 +10,5 @@ class State(StatesGroup):
     tovar_id = State()
 
     search_tovar = State()
+
+    category_add = State()

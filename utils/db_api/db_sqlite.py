@@ -53,6 +53,19 @@ class DataBase:
             result = self.cursor.execute(f'SELECT "category_name" FROM "category" WHERE "category_id" = "{category_id}" ').fetchall()[0]
             return result[0] if len(result) > 0 else []
 
+    # ADMIN
+    def category_add(self, category):
+        with self.connection:
+            result = self.cursor.execute(f'INSERT INTO "category" VALUES ("{slugify(category)}", "{category}")')
+            self.connection.commit()
+            return result
+
+    def category_delete(self, category_id):
+        with self.connection:
+            result = self.cursor.execute(f'DELETE FROM "category" WHERE "category_id"="{category_id}"').fetchall()
+            self.connection.commit()
+            return result
+
 
 class User:
     def __init__(self, db_file):
