@@ -12,3 +12,4 @@ class State(StatesGroup):
     search_tovar = State()
 
     category_add = State()
+    category_edit = State()

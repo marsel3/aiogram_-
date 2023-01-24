@@ -1,5 +1,5 @@
 import sqlite3
-
+from slugify import slugify
 
 class DataBase:
     def __init__(self, db_file):
@@ -65,6 +65,12 @@ class DataBase:
             result = self.cursor.execute(f'DELETE FROM "category" WHERE "category_id"="{category_id}"').fetchall()
             self.connection.commit()
             return result
+
+    def category_edit_name(self, id, name):
+        with self.connection:
+            self.cursor.execute(f'UPDATE "category" SET category_name="{name}" WHERE category_id="{id}"')
+            return self.connection.commit()
+
 
 
 class User:
