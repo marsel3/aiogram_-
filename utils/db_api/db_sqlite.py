@@ -124,6 +124,13 @@ class User:
                                 f'SET "tovar_count"= "{count}" '
                                 f'WHERE "tovar_id" = "{tovar_id}" AND "tovar_count" != "{0}" ')
 
+
+    def basket_delete(self, tovar_id, user_id):
+        return self.cursor.execute(f'DELETE FROM "{user_id}" '
+                                   f'WHERE "tovar_id" = "{tovar_id}" '
+                                   f'AND "favourite" = "0"')
+
+
     def set_favourite(self, tovar_id, user_id, tovar_name):
         with self.connection:
             fav = self.favourite_info(tovar_id, user_id)

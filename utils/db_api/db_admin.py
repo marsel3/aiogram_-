@@ -15,6 +15,14 @@ admin_panel = InlineKeyboardMarkup(inline_keyboard=[
     ]
 )
 
+without_photo = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text='Без фото', callback_data='without_photo')],
+        #[InlineKeyboardButton(text='Товары', callback_data='admin_tovar')],
+        #[InlineKeyboardButton(text='Назад', callback_data='back_to_menu')]
+    ]
+)
+
+
 
 
 def admin_catalog_markup():

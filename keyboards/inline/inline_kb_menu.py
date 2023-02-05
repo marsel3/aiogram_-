@@ -71,8 +71,9 @@ def basket_markup(user_id):
     if len(m1) > 0:
         for i in m1:
             btns.append([InlineKeyboardButton(text=f'{i[1]}', callback_data=f'tovar_{i[0]}'),
+                         InlineKeyboardButton(text=f'✏', callback_data=f'setCount_{i[0]}'),
                          InlineKeyboardButton(text=f'{i[3]} шт.', callback_data=f'setCount_{i[0]}'),
-                         InlineKeyboardButton(text=f'✏', callback_data=f'setCount_{i[0]}')])
+                         InlineKeyboardButton(text=f'🗑', callback_data=f'delTovar_{i[0]}')])
         btns.append([InlineKeyboardButton(text='Очистить корзину', callback_data='cleanBasket')])
         btns.append([InlineKeyboardButton(text='Оформить заказ', callback_data='pay')])
     btns.append([InlineKeyboardButton(text='Назад', callback_data='back_to_menu')])

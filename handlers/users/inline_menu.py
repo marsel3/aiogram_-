@@ -1,6 +1,6 @@
 from aiogram.types import CallbackQuery
 from loader import dp, db_tovars, db_users
-from states import State
+from states.state import State1
 from keyboards.inline import inline_kb_menu
 from aiogram.dispatcher import FSMContext
 from aiogram import types
@@ -28,10 +28,10 @@ async def search(call: CallbackQuery):
     await dp.bot.delete_message(call.message.chat.id, call.message.message_id)
 
     await call.message.answer(f'Введи название неоходимого товара:')
-    await State.search_tovar.set()
+    await State1.search_tovar.set()
 
 
-@dp.message_handler(state=State.search_tovar)
+@dp.message_handler(state=State1.search_tovar)
 async def search_tovar(message: types.Message, state: FSMContext):
     answer = message.text.lower()
     m1 = db_tovars.tovar_search(answer)
@@ -106,19 +106,27 @@ async def cleanBasket(call: CallbackQuery):
 @dp.callback_query_handler(text_startswith='basketAdd_')
 async def basketAdd_(call: CallbackQuery):
     tovar_id = call.data[10:]
-    State.tovar_id = call.data[10:]
+
+    await State1.tovar_id.set()
+    state = dp.get_current().current_state()
+    async with state.proxy() as data:
+        data["tovar_id"] = tovar_id
+
+
     tovar_name = db_tovars.tovar_name(tovar_id)
     await dp.bot.delete_message(call.message.chat.id, call.message.message_id)
     await call.message.answer(f'Введите количество необходимого товара "{tovar_name}":')
-    await State.count.set()
+    await State1.count.set()
 
 
-@dp.message_handler(state=State.count)
+@dp.message_handler(state=State1.count)
 async def add_to_basket(message: types.Message, state: FSMContext):
     answer = message.text
     markup = inline_kb_menu.catalog_markup()
     if answer.isdigit() and int(answer) > 0:
-        tovar_id = State.tovar_id
+        async with state.proxy() as data:
+            tovar_id = data['tovar_id']
+        tovar_id = tovar_id
         tovar_name = db_tovars.tovar_name(tovar_id)
         tovar_price = db_tovars.tovar_price(tovar_id)
         db_users.basket_add(tovar_id, message.from_user.id, tovar_name, tovar_price, count=int(answer))
@@ -131,26 +139,45 @@ async def add_to_basket(message: types.Message, state: FSMContext):
     await state.finish()
 
 
+@dp.callback_query_handler(text_startswith='delTovar_')
+async def setCount_(call: CallbackQuery):
+   tovar_id = call.data[9:]
+   db_users.basket_delete(tovar_id, call.from_user.id)
+   markup, string = inline_kb_menu.basket_markup(call.from_user.id)
+   await dp.bot.send_message(chat_id=call.from_user.id,
+                             text=string, reply_markup=markup)
+
+
 @dp.callback_query_handler(text_startswith='setCount_')
 async def setCount_(call: CallbackQuery):
     await dp.bot.delete_message(call.message.chat.id, call.message.message_id)
     tovar_id = call.data[9:]
     tovar_name = db_tovars.tovar_name(tovar_id)
-    State.tovar_id = tovar_id
+
+    await State1.tovar_id.set()
+    state = dp.get_current().current_state()
+    async with state.proxy() as data:
+        data["tovar_id"] = tovar_id
+
     await call.message.answer(f'Сколько единиц товара "{tovar_name}" оставить в корзине:')
-    await State.new_count.set()
+    await State1.new_count.set()
 
 
-@dp.message_handler(state=State.new_count)
+@dp.message_handler(state=State1.new_count)
 async def set_to_basket(message: types.Message, state: FSMContext):
     answer = message.text
-    if answer.isdigit() and int(answer) > 0:
-        db_users.basket_set(State.tovar_id, message.from_user.id, int(answer))
+    if answer.isdigit():
+        async with state.proxy() as data:
+            tovar_id = data['tovar_id']
+
+        if int(answer) > 0:
+            db_users.basket_set(tovar_id, message.from_user.id, int(answer))
+        else:
+            db_users.basket_delete(tovar_id, message.from_user.id)
+            await message.answer(f'Я тебя понял))) это означало удалить этот товар из корзины!')
     else:
         await message.answer(f'Количество не изменено 😟. В следующий раз вводи число😉')
     await state.finish()
     await default_menu.show_basket(message)
-
-
 
 

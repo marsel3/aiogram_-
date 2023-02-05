@@ -1,7 +1,7 @@
 from aiogram.dispatcher.filters.state import StatesGroup, State
 
 
-class State(StatesGroup):
+class State1(StatesGroup):
     category = State()
 
     count = State()
@@ -13,3 +13,6 @@ class State(StatesGroup):
 
     category_add = State()
     category_edit = State()
+    tovar_name = State()
+    tovar_price = State()
+    tovar_disc = State()
