@@ -112,7 +112,6 @@ async def basketAdd_(call: CallbackQuery):
     async with state.proxy() as data:
         data["tovar_id"] = tovar_id
 
-
     tovar_name = db_tovars.tovar_name(tovar_id)
     await dp.bot.delete_message(call.message.chat.id, call.message.message_id)
     await call.message.answer(f'Введите количество необходимого товара "{tovar_name}":')
@@ -126,7 +125,6 @@ async def add_to_basket(message: types.Message, state: FSMContext):
     if answer.isdigit() and int(answer) > 0:
         async with state.proxy() as data:
             tovar_id = data['tovar_id']
-        tovar_id = tovar_id
         tovar_name = db_tovars.tovar_name(tovar_id)
         tovar_price = db_tovars.tovar_price(tovar_id)
         db_users.basket_add(tovar_id, message.from_user.id, tovar_name, tovar_price, count=int(answer))
