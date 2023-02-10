@@ -39,7 +39,7 @@ def tovar_card_markup(tovar_id, user_id):
     if db_users.favourite_info(tovar_id, user_id) == 1:
         string = "Убрать из избранного"
     if user_id in admins_id:
-        btns.append([InlineKeyboardButton(text='Изменить товар', callback_data=f'adminEditTovar_{tovar_id}'),
+        btns.append([InlineKeyboardButton(text='Изменить товар', callback_data=f'admin_tovar_{tovar_id}'),
                     InlineKeyboardButton(text='Удалить товар', callback_data=f'adminDeleteTovar_{tovar_id}')])
     btns.append([InlineKeyboardButton(text=string, callback_data=f'setFavourite_{tovar_id}')])
          # [InlineKeyboardButton(text=f'➖', callback_data=f'test'),

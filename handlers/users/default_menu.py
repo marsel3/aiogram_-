@@ -1,5 +1,5 @@
 from aiogram import types
-from loader import dp, db_tovars, db_users
+from loader import dp, db_users
 from keyboards.inline import inline_kb_menu
 
 

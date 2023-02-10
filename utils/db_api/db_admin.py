@@ -1,11 +1,6 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
-from loader import db_tovars, db_users
-from data.config import admins_id
-import sqlite3
-from loader import db_tovars, db_users
-
-from slugify import slugify
+from loader import db_tovars
 
 
 admin_main = ReplyKeyboardMarkup(keyboard=[
@@ -68,6 +63,7 @@ def set_tovar_card(tovar_id):
     btns.append([InlineKeyboardButton(text='Изменить описание', callback_data=f'edit_tovar_disc_{tovar_id}')])
     btns.append([InlineKeyboardButton(text='Изменить описание', callback_data=f'edit_tovar_photo_{tovar_id}')])
 
+    btns.append([InlineKeyboardButton(text='Удалить товар', callback_data=f'adminDeleteTovar_{tovar_id}')])
     btns.append([InlineKeyboardButton(text='Назад', callback_data='admin_category')])
     return InlineKeyboardMarkup(inline_keyboard=btns)
 

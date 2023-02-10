@@ -28,13 +28,14 @@ async def show_catalog(call: CallbackQuery):
 
 
 @dp.message_handler(state=FSMAdmin.category_id)
-async def state2(message: types.Message):
+async def state2(message: types.Message, state: FSMContext):
     text = message.text
     try:
         db_tovars.category_add(text)
         await message.answer(f'Категория "{text}" создана!', reply_markup=db_admin.admin_catalog_markup())
     except:
         await message.answer(f'Что-то пошло не так! возможно такая категория уже есть...')
+    await state.finish()
 
 
 @dp.callback_query_handler(text_startswith='admin_category_')
@@ -54,7 +55,13 @@ async def show_catalog(call: CallbackQuery):
         await dp.bot.send_photo(chat_id=call.message.chat.id, caption=text,
                                 photo=photo, reply_markup=markup)
     else:
-        await call.message.answer(text, reply_markup=markup)
+        await call.message.edit_text(text, reply_markup=markup)
+
+
+@dp.callback_query_handler(text_startswith="adminDeleteTovar_")
+async def show_catalog(call: CallbackQuery):
+    print('admin_Delete_ not woked')
+
 
 
 @dp.callback_query_handler(text_startswith='edit_category_')
