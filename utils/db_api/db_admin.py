@@ -56,7 +56,6 @@ def admin_tovars_markup(category):
     btns.append([InlineKeyboardButton(text='Изменить название категории', callback_data=f'edit_category_{category}')])
     btns.append([InlineKeyboardButton(text='Удалить выбранную категорию', callback_data=f'delete_category_{category}')])
     btns.append([InlineKeyboardButton(text='Назад', callback_data='admin_category')])
-    print(btns)
     return InlineKeyboardMarkup(inline_keyboard=btns)
 
 

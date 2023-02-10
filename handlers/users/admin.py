@@ -44,7 +44,7 @@ async def admin_category_(call: CallbackQuery):
                               reply_markup=db_admin.admin_tovars_markup(category_id))
 
 
-@dp.callback_query_handler(text_startswith="admin_tovar_")  #допилить
+@dp.callback_query_handler(text_startswith="admin_tovar_")
 async def show_catalog(call: CallbackQuery):
     tovar_id = call.data[12:]
 
