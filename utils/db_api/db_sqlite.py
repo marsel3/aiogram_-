@@ -1,5 +1,5 @@
 import sqlite3
-from slugify import slugify
+
 
 class DataBase:
     def __init__(self, db_file):
