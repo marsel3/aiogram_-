@@ -11,6 +11,13 @@ class DataBase:
             result = self.cursor.execute(f'SELECT * FROM "category"').fetchall()
             return result
 
+    def category_name_bytovar(self, tovar_id):
+        with self.connection:
+            result = self.cursor.execute(f'SELECT "category_id" FROM "tovar" '
+                                         f'WHERE "tovar_id"="{tovar_id}"').fetchall()[0][0]
+            return self.category_name(result)
+
+
     def category_list(self):
         with self.connection:
             result = self.cursor.execute(f'SELECT "category_id" FROM "category"').fetchall()
@@ -56,20 +63,21 @@ class DataBase:
     # ADMIN
     def category_add(self, category):
         with self.connection:
-            result = self.cursor.execute(f'INSERT INTO "category" VALUES ("{slugify(category)}", "{category}")')
-            self.connection.commit()
-            return result
+            return self.cursor.execute(f'''INSERT INTO "category" ("category_name") VALUES ("{category}")''').fetchall()
 
     def category_delete(self, category_id):
         with self.connection:
-            result = self.cursor.execute(f'DELETE FROM "category" WHERE "category_id"="{category_id}"').fetchall()
-            self.connection.commit()
-            return result
+            return self.cursor.execute(f'DELETE FROM "category" WHERE "category_id"="{category_id}"').fetchall()
 
     def category_edit_name(self, id, name):
         with self.connection:
-            self.cursor.execute(f'UPDATE "category" SET category_name="{name}" WHERE category_id="{id}"')
-            return self.connection.commit()
+            return self.cursor.execute(f'UPDATE "category" SET category_name="{name}" WHERE category_id="{id}"')
+
+    def tovar_add(self, category_id, tovar_name, tovar_price, tovar_disc, tovar_photo=''):
+        with self.connection:
+            return self.cursor.execute(f'''INSERT INTO "tovar" 
+                    ("category_id", "tovar_name", "tovar_price", "tovar_disc", "tovar_photo") 
+                    VALUES ("{category_id}", "{tovar_name}", "{tovar_price}", "{tovar_disc}", "{tovar_photo}")''').fetchall()
 
 
 

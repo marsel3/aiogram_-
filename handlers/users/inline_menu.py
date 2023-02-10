@@ -66,10 +66,15 @@ async def tovar_card(call: CallbackQuery):
     markup = inline_kb_menu.tovar_card_markup(tovar_id, call.from_user.id)
     tovar_name, tovar_price, tovar_disc, tovar_photo = db_tovars.tovar_card(tovar_id)
     await dp.bot.delete_message(call.message.chat.id, call.message.message_id)
-    await dp.bot.send_photo(chat_id=call.message.chat.id,
-                            photo=tovar_photo,
-                            caption=f'{tovar_name}: \t{tovar_price}₽ \n\n{tovar_disc}',
-                            reply_markup=markup)
+    try:
+        await dp.bot.send_photo(chat_id=call.message.chat.id,
+                                photo=tovar_photo,
+                                caption=f'{tovar_name}: \t{tovar_price}₽ \n\n{tovar_disc}',
+                                reply_markup=markup)
+    except:
+        await dp.bot.send_message(chat_id=call.message.chat.id,
+                                  caption=f'{tovar_name}: \t{tovar_price}₽ \n\n{tovar_disc}',
+                                  reply_markup=markup)
 
 
 @dp.callback_query_handler(text_startswith='setFavourite_')

@@ -11,8 +11,22 @@ class State1(StatesGroup):
 
     search_tovar = State()
 
-    category_add = State()
-    category_edit = State()
+
+class FSMAdmin(StatesGroup):
+    category_id = State()
+
     tovar_name = State()
     tovar_price = State()
     tovar_disc = State()
+    tovar_photo = State()
+
+    agreement = State()
+
+
+class FSMAdminEdit(StatesGroup):
+    category_id = State()
+
+    tovar_name = State()
+    tovar_price = State()
+    tovar_disc = State()
+    tovar_photo = State()
