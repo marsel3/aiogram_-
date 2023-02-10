@@ -11,7 +11,8 @@ from utils.db_api import db_admin
 
 @dp.message_handler(IsAdmin(), text='/admin')
 async def admin(messsage: types.Message):
-    await messsage.answer(f'Здравствуйте, {messsage.from_user.full_name},  вы попали в админ панель!',
+    await messsage.answer(f'Здравствуйте, {messsage.from_user.full_name},  вы попали в админ панель!'
+                          f'\nВыберите пункт, который хотите отредактировать:',
                           reply_markup=db_admin.admin_panel)
 
 
