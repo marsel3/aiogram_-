@@ -18,7 +18,8 @@ async def admin(messsage: types.Message):
 
 @dp.callback_query_handler(text='admin_category')
 async def admin_catalog(call: CallbackQuery):
-    await call.message.edit_text('Вы в меню редактора категории', reply_markup=db_admin.admin_catalog_markup())
+    await dp.bot.delete_message(call.message.chat.id, call.id)
+    await call.message.answer('Вы в меню редактора категории', reply_markup=db_admin.admin_catalog_markup())
 
 
 @dp.callback_query_handler(text="add_new_category")

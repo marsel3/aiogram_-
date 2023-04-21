@@ -5,7 +5,7 @@ from aiogram import Dispatcher
 from data.config import admins_id
 
 
-async def on_startup_notify(dp: Dispatcher):
+async def on_startup_notify(dp):
     for admin in admins_id:
         try:
             text = 'Бот запущен'

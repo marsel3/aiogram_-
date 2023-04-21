@@ -16,7 +16,7 @@ def catalog_markup():
     btns = []
     btns.append([InlineKeyboardButton(text='Поиск товара', callback_data='search')])
     for i in m1:
-        btns.append([InlineKeyboardButton(text=f'{i[1]}', callback_data=f'{i[0]}')])
+        btns.append([InlineKeyboardButton(text=f'{i[1]}', callback_data=f'category_id{i[0]}')])
     btns.append([InlineKeyboardButton(text='Назад', callback_data='back_to_menu')])
 
     return InlineKeyboardMarkup(inline_keyboard=btns)
@@ -32,20 +32,22 @@ def tovar_markup(catalog):
     return markup
 
 
-def tovar_card_markup(tovar_id, user_id):
+def tovar_card_markup(tovar_id, user_id, count):
     category_id = db_tovars.category_id(tovar_id)
     btns = []
     string = "Добавить в избранное"
     if db_users.favourite_info(tovar_id, user_id) == 1:
         string = "Убрать из избранного"
+    '''  
     if user_id in admins_id:
         btns.append([InlineKeyboardButton(text='Изменить товар', callback_data=f'admin_tovar_{tovar_id}'),
                     InlineKeyboardButton(text='Удалить товар', callback_data=f'adminDeleteTovar_{tovar_id}')])
-    btns.append([InlineKeyboardButton(text=string, callback_data=f'setFavourite_{tovar_id}')])
-         # [InlineKeyboardButton(text=f'➖', callback_data=f'test'),
-         # InlineKeyboardButton(text=f'?', callback_data=f'test'),
-         # InlineKeyboardButton(text=f'➕', callback_data=f'test')],
-    btns.append([InlineKeyboardButton(text='Добавить в корзину', callback_data=f'basketAdd_{tovar_id}')])
+    '''
+    btns.append([InlineKeyboardButton(text=string, callback_data=f'setFavourite_{tovar_id}_{count}')])
+    btns.append([InlineKeyboardButton(text=f'➖', callback_data=f'minusCount_{tovar_id}_{count}'),
+          InlineKeyboardButton(text=f'{count}', callback_data=f'v'),
+          InlineKeyboardButton(text=f'➕', callback_data=f'plusCount_{tovar_id}_{count}')])
+    btns.append([InlineKeyboardButton(text='Добавить в корзину', callback_data=f'basketAdd_{tovar_id}_{count}')])
     btns.append([InlineKeyboardButton(text='Назад', callback_data=f'back_to_tovars_{category_id}')])
     return InlineKeyboardMarkup(inline_keyboard=btns)
 

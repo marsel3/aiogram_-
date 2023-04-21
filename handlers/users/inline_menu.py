@@ -7,10 +7,13 @@ from aiogram import types
 from handlers.users import default_menu
 
 
-@dp.callback_query_handler(text='test')
+@dp.callback_query_handler(text='test1')
 async def show_catalog(call: CallbackQuery):
     await call.message.edit_text('C новой обновой заработает...')
 
+@dp.callback_query_handler(text='test1')
+async def show_catalog(call: CallbackQuery):
+    await call.message.edit_text('C новой обновой заработает...')
 
 @dp.callback_query_handler(text='back_to_menu')
 async def back_to_menu(call: CallbackQuery):
@@ -44,10 +47,11 @@ async def search_tovar(message: types.Message, state: FSMContext):
 
 
 
-@dp.callback_query_handler(text=db_tovars.category_list())
+@dp.callback_query_handler(text_startswith='category_id')
 async def category_list(call: CallbackQuery):
+    category_id = call.data[11:]
     await call.message.edit_text(f'Какой товар выберите?  😏',
-                                 reply_markup=inline_kb_menu.tovar_markup(call.data))
+                                 reply_markup=inline_kb_menu.tovar_markup(category_id))
 
 
 @dp.callback_query_handler(text_startswith='back_to_tovars_')
@@ -63,7 +67,7 @@ async def back_to_tovars_(call: CallbackQuery):
 @dp.callback_query_handler(text_startswith='tovar_')
 async def tovar_card(call: CallbackQuery):
     tovar_id = call.data[6:]
-    markup = inline_kb_menu.tovar_card_markup(tovar_id, call.from_user.id)
+    markup = inline_kb_menu.tovar_card_markup(tovar_id, call.from_user.id, 1)
     tovar_name, tovar_price, tovar_disc, tovar_photo = db_tovars.tovar_card(tovar_id)
     await dp.bot.delete_message(call.message.chat.id, call.message.message_id)
     try:
@@ -72,17 +76,17 @@ async def tovar_card(call: CallbackQuery):
                                 caption=f'{tovar_name}: \t{tovar_price}₽ \n\n{tovar_disc}',
                                 reply_markup=markup)
     except:
-        await dp.bot.send_message(chat_id=call.message.chat.id,
-                                  caption=f'{tovar_name}: \t{tovar_price}₽ \n\n{tovar_disc}',
+        await dp.bot.send_message(chat_id=call.from_user.id,
+                                  text=f'{tovar_name}: \t{tovar_price}₽ \n\n{tovar_disc}',
                                   reply_markup=markup)
 
 
 @dp.callback_query_handler(text_startswith='setFavourite_')
 async def setFavourite_(call: CallbackQuery):
-    tovar_id = call.data[13:]
+    pas, tovar_id, count = call.data.split('_')
     tovar_name = db_tovars.tovar_name(tovar_id)
     db_users.set_favourite(tovar_id, call.from_user.id, tovar_name)
-    await call.message.edit_reply_markup(inline_kb_menu.tovar_card_markup(tovar_id, call.from_user.id))
+    await call.message.edit_reply_markup(inline_kb_menu.tovar_card_markup(tovar_id, call.from_user.id, count))
 
 
 @dp.callback_query_handler(text_startswith='delFavourite_')
@@ -110,6 +114,36 @@ async def cleanBasket(call: CallbackQuery):
 
 @dp.callback_query_handler(text_startswith='basketAdd_')
 async def basketAdd_(call: CallbackQuery):
+    pas, tovar_id, count = call.data.split('_')
+
+    markup = inline_kb_menu.catalog_markup()
+    tovar_name = db_tovars.tovar_name(tovar_id)
+    tovar_price = db_tovars.tovar_price(tovar_id)
+    db_users.basket_add(tovar_id, call.from_user.id, tovar_name, tovar_price, count=int(count))
+    await dp.bot.delete_message(chat_id=call.from_user.id, message_id=call.message.message_id)
+    await call.message.answer(f'Товар доавлен в корзину 😉\nВы перешли в каталог, выберите категорию нужного вам товара.',
+                                reply_markup=markup)
+
+
+@dp.callback_query_handler(text_startswith='minusCount_')
+async def basketAdd_(call: CallbackQuery):
+    pas, tovar_id, count = call.data.split('_')
+    count = int(count)
+    if count - 1 > 0:
+        await call.message.edit_reply_markup(reply_markup=inline_kb_menu.tovar_card_markup(tovar_id,
+                                                                                           call.from_user.id, count-1))
+    else:
+        pass
+
+@dp.callback_query_handler(text_startswith='plusCount_')
+async def basketAdd_(call: CallbackQuery):
+    pas, tovar_id, count = call.data.split('_')
+    count = int(count) + 1
+    await call.message.edit_reply_markup(reply_markup=inline_kb_menu.tovar_card_markup(tovar_id,
+                                                                                       call.from_user.id, count))
+
+"""@dp.callback_query_handler(text_startswith='basketAdd_')
+async def basketAdd_(call: CallbackQuery):
     tovar_id = call.data[10:]
 
     await State1.tovar_id.set()
@@ -121,7 +155,6 @@ async def basketAdd_(call: CallbackQuery):
     await dp.bot.delete_message(call.message.chat.id, call.message.message_id)
     await call.message.answer(f'Введите количество необходимого товара "{tovar_name}":')
     await State1.count.set()
-
 
 @dp.message_handler(state=State1.count)
 async def add_to_basket(message: types.Message, state: FSMContext):
@@ -140,7 +173,7 @@ async def add_to_basket(message: types.Message, state: FSMContext):
                              f'\nВы перешли в каталог, выберите категорию нужного вам товара.',
                              reply_markup=markup)
     await state.finish()
-
+"""
 
 @dp.callback_query_handler(text_startswith='delTovar_')
 async def setCount_(call: CallbackQuery):
