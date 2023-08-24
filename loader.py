@@ -8,7 +8,7 @@ from data import config
 bot = Bot(token=config.BOT_TOKEN, parse_mode=types.ParseMode.HTML)
 
 db_users = User('db/users.db')
-#db_tovars = DataBase('db/tovars.db')
-db_tovars = DataBase('adminka/db.sqlite3')
+db_tovars = DataBase('db/tovars.db')
+#db_tovars = DataBase('adminka/db.sqlite3')
 
 dp = Dispatcher(bot, storage=MemoryStorage())

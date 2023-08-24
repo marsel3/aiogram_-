@@ -5,7 +5,7 @@ load_dotenv()
 
 
 #BOT_TOKEN = str(os.getenv(("BOT_TOKEN")))
-BOT_TOKEN = '1672438859:AAFjoueNYWY2ZwUM1UqNIBC_USPJ2N4hE48'
+BOT_TOKEN = '1672438859:AAEVf_aKog8XvhYrERzcXdQ7WljolArQ7sc'
 PAYMENT_TOKEN = str(os.getenv(("PAYMENT_TOKEN")))
 
 #PGUSER = str(os.getenv(("PGUSER")))
