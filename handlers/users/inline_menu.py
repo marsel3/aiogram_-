@@ -11,9 +11,6 @@ from handlers.users import default_menu
 async def show_catalog(call: CallbackQuery):
     await call.message.edit_text('C новой обновой заработает...')
 
-@dp.callback_query_handler(text='test1')
-async def show_catalog(call: CallbackQuery):
-    await call.message.edit_text('C новой обновой заработает...')
 
 @dp.callback_query_handler(text='back_to_menu')
 async def back_to_menu(call: CallbackQuery):

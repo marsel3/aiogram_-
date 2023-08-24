@@ -9,6 +9,7 @@ async def show_catalog(message: types.Message):
     await message.answer(f'Вы перешли в каталог, выберите категорию нужного вам товара.',
                          reply_markup=inline_kb_menu.catalog_markup())
 
+
 @dp.message_handler(text=['🛍️ Корзина', 'корзина'])
 async def show_basket(message: types.Message):
     # await message.delete()

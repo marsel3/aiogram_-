@@ -16,8 +16,6 @@ async def start(message: types.Message):
         unique_code = extract_unique_code(message.text)
         if unique_code and await user_exists(unique_code):
             referral = unique_code
-
-        print(referral)
         await add_user(user_id=message.from_user.id,
                        fio=message.from_user.full_name,
                        referral=referral)
