@@ -4,6 +4,7 @@ from loader import dp, db_users
 from keyboards.default import keyboard_menu
 from utils.db_api.db_asyncpg import *
 
+
 @dp.message_handler()
 async def main(message: types.Message):
     exists = await user_exists(message.from_user.id)

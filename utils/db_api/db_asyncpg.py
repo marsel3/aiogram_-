@@ -15,4 +15,14 @@ async def add_user(user_id: int, fio: str, referral=None):
                                      'VALUES ($1, $2, $3)', user_id, fio, referral)
 
 
+async def category_list():
+    async with dp['db_pool'].acquire() as connection:
+        async with connection.transaction():
+            return await connection.fetch('SELECT * FROM "category"')
 
+
+async def tovar_by_category(category):
+    async with dp['db_pool'].acquire() as connection:
+        async with connection.transaction():
+            result = await connection.fetch('SELECT * FROM "tovar" WHERE "category_id"=$1', category)
+            return result

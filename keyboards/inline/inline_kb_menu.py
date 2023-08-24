@@ -11,25 +11,22 @@ back_to_menu = InlineKeyboardMarkup(inline_keyboard=[
 )
 
 
-def catalog_markup():
-    m1 = db_tovars.category()
-
-    btns = []
+def categories_markup(categories):
+    btns = list()
     btns.append([InlineKeyboardButton(text='Поиск товара', callback_data='search')])
-    for i in m1:
-        btns.append([InlineKeyboardButton(text=f'{i[1]}', callback_data=f'category_id{i[0]}')])
+    for category in categories:
+        btns.append([InlineKeyboardButton(text=f'{category["category"]}', callback_data=f'category_{category["id"]}')])
     btns.append([InlineKeyboardButton(text='Назад', callback_data='back_to_menu')])
 
     return InlineKeyboardMarkup(inline_keyboard=btns)
 
 
-def tovar_markup(catalog):
-    m1 = db_tovars.tovar(catalog)
+def tovar_markup(tovars):
+    print(tovars)
     markup = InlineKeyboardMarkup()
-    for i in m1:
-        markup.add(InlineKeyboardButton(text=f'{i[1]}', callback_data=f'tovar_{i[0]}'))
+    for tovar in tovars:
+        markup.add(InlineKeyboardButton(text=f'{tovar["name"]}', callback_data=f'tovar_{tovar["id"]}'))
     markup.add(InlineKeyboardButton(text='Назад в каталог', callback_data='back_to_catalog'))
-
     return markup
 
 
