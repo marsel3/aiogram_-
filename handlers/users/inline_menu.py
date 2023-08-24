@@ -1,6 +1,5 @@
 from aiogram.types import CallbackQuery
-from loader import dp, db_tovars, db_users
-from states.state import State1
+from loader import dp
 from keyboards.inline import inline_kb_menu
 from aiogram.dispatcher import FSMContext
 from aiogram import types
@@ -23,17 +22,36 @@ async def back_to_catalog(call: CallbackQuery):
     await call.message.answer('kek')
     categories = await category_list()
     await call.message.edit_text(text=f'Вы перешли в каталог, выберите категорию нужного вам товара.',
-                                 reply_markup=inline_kb_menu.categories_markup(categories))
-
+                                 reply_markup=await inline_kb_menu.categories_markup(categories))
 
 
 @dp.callback_query_handler(text_startswith='category_')
-async def category_list(call: CallbackQuery):
+async def tovar_list(call: CallbackQuery):
     category_id = int(call.data.split('_')[1])
     tovar_list = await tovar_by_category(category_id)
-    await call.message.edit_text(f'Какой товар выберите?  😏',
-                                 reply_markup=inline_kb_menu.tovar_markup(tovar_list))
+    text = f'Какой товар выберите?  😏'
+    markup = await inline_kb_menu.tovar_markup(tovar_list)
+    try:
+        await call.message.edit_text(text=text, reply_markup=markup)
+    except:
+        await call.message.answer(text=text, reply_markup=markup)
+        await call.message.delete()
 
+
+@dp.callback_query_handler(text_startswith='tovar_')
+async def tovar_info(call: CallbackQuery):
+    tovar_id = int(call.data.split('_')[1])
+    tovar_info = await tovar_by_id(tovar_id)
+
+    text = f'{tovar_info["name"]}: \t{tovar_info["price"]}₽ \n\n{tovar_info["disc"]}'
+    photo = tovar_info["photo"]
+    markup = await inline_kb_menu.tovar_card_markup(tovar_id, 1)
+
+    await call.message.delete()
+    try:
+        await call.message.answer_photo(photo=photo, caption=text, reply_markup=markup)
+    except:
+        await call.message.answer(text=text, reply_markup=markup)
 
 """
 @dp.callback_query_handler(text='search')

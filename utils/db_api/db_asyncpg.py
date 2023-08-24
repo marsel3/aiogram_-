@@ -21,8 +21,22 @@ async def category_list():
             return await connection.fetch('SELECT * FROM "category"')
 
 
+async def category_by_tovar(tovar_id):
+    async with dp['db_pool'].acquire() as connection:
+        async with connection.transaction():
+            result = await connection.fetchrow('SELECT "category_id" FROM "tovar" WHERE "id"=$1', tovar_id)
+            return result["category_id"] if result else None
+
+
 async def tovar_by_category(category):
     async with dp['db_pool'].acquire() as connection:
         async with connection.transaction():
             result = await connection.fetch('SELECT * FROM "tovar" WHERE "category_id"=$1', category)
+            return result
+
+
+async def tovar_by_id(id):
+    async with dp['db_pool'].acquire() as connection:
+        async with connection.transaction():
+            result = await connection.fetchrow('SELECT * FROM "tovar" WHERE "id"=$1', id)
             return result

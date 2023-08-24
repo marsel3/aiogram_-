@@ -1,5 +1,5 @@
 from aiogram import types
-from loader import dp, db_users
+from loader import dp
 from keyboards.inline import inline_kb_menu
 from utils.db_api.db_asyncpg import *
 
@@ -9,7 +9,7 @@ async def show_catalog(message: types.Message):
     #await message.delete()
     categories = await category_list()
     await message.answer(f'Вы перешли в каталог, выберите категорию нужного вам товара.',
-                         reply_markup=inline_kb_menu.categories_markup(categories))
+                         reply_markup=await inline_kb_menu.categories_markup(categories))
 
 
 @dp.message_handler(text=['🛍️ Корзина', 'корзина'])
