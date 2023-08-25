@@ -1,6 +1,5 @@
 from loader import dp
 from aiogram import types
-from keyboards.inline import inline_kb_menu
 from keyboards.default import keyboard_menu
 from utils.db_api.db_asyncpg import *
 

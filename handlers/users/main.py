@@ -1,6 +1,5 @@
 from aiogram import types
-
-from loader import dp, db_users
+from loader import dp
 from keyboards.default import keyboard_menu
 from utils.db_api.db_asyncpg import *
 

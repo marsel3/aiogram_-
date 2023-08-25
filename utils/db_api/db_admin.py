@@ -1,6 +1,5 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
-from loader import db_tovars
 
 
 admin_main = ReplyKeyboardMarkup(keyboard=[

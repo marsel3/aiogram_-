@@ -14,8 +14,26 @@ async def show_catalog(message: types.Message):
 @dp.message_handler(text=['🛍️ Корзина', 'корзина'])
 async def show_basket(message: types.Message):
     # await message.delete()
-    markup, string = inline_kb_menu.basket_markup(message.from_user.id)
-    await message.answer(string, reply_markup=markup)
+    await send_basket(chat_id=message.chat.id, user_id=message.chat.id)
+
+
+async def send_basket(chat_id, user_id):
+    basket = await basket_list(user_id)
+    markup = await inline_kb_menu.basket_markup(basket)
+
+    string = f'<b>Корзина.</b>'
+    summ = 0
+    count = 1
+    if len(basket) > 0:
+        for tovar in basket:
+            string += f'\n\n{count}. «{tovar["name"]}» ' \
+                      f'\n\t\t\tЦена: {tovar["price"]} × {tovar["count"]}  =  {tovar["price"] * tovar["count"]} рублей'
+            summ += tovar["price"] * tovar["count"]
+            count += 1
+        string += '\n__________________' + '_' * len(str(summ))
+    string += f'\nИтого: {summ} рублей'
+
+    await dp.bot.send_message(chat_id=chat_id, text=string, reply_markup=markup, parse_mode="HTML")
 
 
 @dp.message_handler(text=['⭐ Избранное', 'избранное'])

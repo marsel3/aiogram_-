@@ -4,7 +4,7 @@ from aiogram.types import CallbackQuery
 from data.config import admins_id
 
 from data.config import PAYMENT_TOKEN
-from loader import dp, db_users
+from loader import dp
 
 
 SUPERSPEED_SHIPPING_OPTION = ShippingOption(

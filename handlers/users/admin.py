@@ -1,7 +1,7 @@
 from filters import IsAdmin
 from aiogram import types
 
-from loader import dp, db_tovars
+from loader import dp
 from aiogram.dispatcher import FSMContext
 from aiogram.types import CallbackQuery
 

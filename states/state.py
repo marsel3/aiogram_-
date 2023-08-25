@@ -11,6 +11,13 @@ class SetCount(StatesGroup):
     count = State()
 
 
+class SetCountInBasket(StatesGroup):
+    msg_list = State()
+    tovar_id = State()
+    count = State()
+
+
+
 class FSMAdmin(StatesGroup):
     category_id = State()
 
