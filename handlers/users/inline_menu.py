@@ -136,10 +136,8 @@ async def delFavourite_(call: types.CallbackQuery):
 
 
 @dp.callback_query_handler(text='clearFavourite')
-async def cleanFavourite(call: types.CallbackQuery):
-    print(1)
+async def clearFavourite(call: types.CallbackQuery):
     user_id = int(call.from_user.id)
-    print(user_id)
     await tovar_favourite_clear(user_id=user_id)
     await call.message.edit_reply_markup(reply_markup=await inline_kb_menu.favourite_markup(user_id))
 
