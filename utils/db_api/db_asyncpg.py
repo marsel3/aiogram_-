@@ -40,3 +40,43 @@ async def tovar_by_id(id):
         async with connection.transaction():
             result = await connection.fetchrow('SELECT * FROM "tovar" WHERE "id"=$1', id)
             return result
+
+
+async def tovar_favourite_list(user_id):
+    async with dp['db_pool'].acquire() as connection:
+        async with connection.transaction():
+            return await connection.fetch(
+                'SELECT f.*, t."name" FROM "favourite" f JOIN "tovar" t ON f."tovar_id" = t."id" '
+                'WHERE f."user_id" = $1', user_id)
+
+
+async def tovar_is_favourite(tovar_id, user_id):
+    async with dp['db_pool'].acquire() as connection:
+        async with connection.transaction():
+            result = await connection.fetchrow('SELECT * FROM "favourite" WHERE "tovar_id"=$1 and "user_id"=$2',
+                                               tovar_id, user_id)
+            return True if result else False
+
+
+async def tovar_set_favourite(tovar_id, user_id):
+    async with dp['db_pool'].acquire() as connection:
+        async with connection.transaction():
+            if await tovar_is_favourite(tovar_id=tovar_id, user_id=user_id):
+                await connection.execute('DELETE FROM "favourite" WHERE "tovar_id" = $1 AND "user_id" = $2',
+                                         tovar_id, user_id)
+            else:
+                await connection.execute('INSERT INTO "favourite" ("tovar_id", "user_id") VALUES ($1, $2)',
+                                         tovar_id, user_id)
+
+async def tovar_favourite_clear(user_id):
+    async with dp['db_pool'].acquire() as connection:
+        async with connection.transaction():
+            await connection.execute('DELETE FROM "favourite" WHERE "user_id" = $1', user_id)
+
+
+async def tovar_add_to_basket(user_id, tovar_id, count):
+    async with dp['db_pool'].acquire() as connection:
+        async with connection.transaction():
+            await connection.fetch('INSERT INTO "basket" ("user_id", "tovar_id", "count") VALUES ($1, $2, $3)',
+                                         tovar_id, user_id, count)
+

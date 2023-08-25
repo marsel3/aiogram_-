@@ -7,9 +7,8 @@ from utils.db_api.db_asyncpg import *
 @dp.message_handler(text=['🗂️ Каталог', 'каталог', "Назад в каталог"])
 async def show_catalog(message: types.Message):
     #await message.delete()
-    categories = await category_list()
     await message.answer(f'Вы перешли в каталог, выберите категорию нужного вам товара.',
-                         reply_markup=await inline_kb_menu.categories_markup(categories))
+                         reply_markup=await inline_kb_menu.categories_markup())
 
 
 @dp.message_handler(text=['🛍️ Корзина', 'корзина'])
@@ -22,7 +21,7 @@ async def show_basket(message: types.Message):
 @dp.message_handler(text=['⭐ Избранное', 'избранное'])
 async def show_favourite(message: types.Message):
     await message.answer('Ваш список избранного:',
-                         reply_markup=inline_kb_menu.favourite_markup(message.from_user.id))
+                         reply_markup=await inline_kb_menu.favourite_markup(message.from_user.id))
 
 
 @dp.message_handler(text=['📲️Контакты', 'контакты'])
@@ -42,11 +41,9 @@ async def show_contact(message: types.Message):
 @dp.message_handler(text=['👤 Профиль', 'профиль'])
 async def show_profile(message: types.Message):
     # await message.delete()
-    amount = db_users.total_amount(message.from_user.id)
-    sale = 0
     await message.answer(f'Профиль\nВаше Имя: {message.from_user.full_name}'
                          f'\n\nВаша статистика'
-                         f'\nОбщая сумма покупок: {amount}₽'
-                         f'\n\nПроцент скидки: {sale} %',
+                         f'\nОбщая сумма покупок: {0}₽'
+                         f'\n\nПроцент скидки: {0} %',
                          reply_markup=inline_kb_menu.back_to_menu)
 

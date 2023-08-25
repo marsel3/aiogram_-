@@ -1,15 +1,14 @@
 from aiogram.dispatcher.filters.state import StatesGroup, State
 
 
-class State1(StatesGroup):
-    category = State()
+class Search(StatesGroup):
+    tovar_name = State()
 
-    count = State()
-    new_count = State()
 
+class SetCount(StatesGroup):
+    msg_list = State()
     tovar_id = State()
-
-    search_tovar = State()
+    count = State()
 
 
 class FSMAdmin(StatesGroup):

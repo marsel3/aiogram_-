@@ -9,7 +9,8 @@ back_to_menu = InlineKeyboardMarkup(inline_keyboard=[
 )
 
 
-async def categories_markup(categories):
+async def categories_markup():
+    categories = await category_list()
     btns = list()
     btns.append([InlineKeyboardButton(text='Поиск товара', callback_data='search')])
     for category in categories:
@@ -27,48 +28,33 @@ async def tovar_markup(tovars):
     return markup
 
 
-async def tovar_card_markup(tovar_id, count):
+async def tovar_card_markup(tovar_id, count, user_id):
     btns = []
     category_id = await category_by_tovar(tovar_id)
+    favourite_text = "Добавить в избранное"
+    if await tovar_is_favourite(tovar_id, user_id):
+        favourite_text = "Убрать из избранного"
+    btns.append([InlineKeyboardButton(text=favourite_text, callback_data=f'setFavourite_{tovar_id}_{count}')])
     btns.append([InlineKeyboardButton(text=f'➖', callback_data=f'minusCount_{tovar_id}_{count}'),
-          InlineKeyboardButton(text=f'{count}', callback_data=f'setCategory_{tovar_id}'),
-          InlineKeyboardButton(text=f'➕', callback_data=f'plusCount_{tovar_id}_{count}')])
+                 InlineKeyboardButton(text=f'{count}', callback_data=f'setTovarCount_{tovar_id}'),
+                 InlineKeyboardButton(text=f'➕', callback_data=f'plusCount_{tovar_id}_{count}')])
+
+    btns.append([InlineKeyboardButton(text='Добавить в корзину', callback_data=f'basketAdd_{tovar_id}_{count}')])
     btns.append([InlineKeyboardButton(text='Назад', callback_data=f'category_{category_id}')])
     return InlineKeyboardMarkup(inline_keyboard=btns)
 
 
-def tovar_card_markup2(tovar_id, user_id, count):
-    category_id = db_tovars.category_id(tovar_id)
-    btns = []
-    string = "Добавить в избранное"
-    if db_users.favourite_info(tovar_id, user_id) == 1:
-        string = "Убрать из избранного"
-    '''  
-    if user_id in admins_id:
-        btns.append([InlineKeyboardButton(text='Изменить товар', callback_data=f'admin_tovar_{tovar_id}'),
-                    InlineKeyboardButton(text='Удалить товар', callback_data=f'adminDeleteTovar_{tovar_id}')])
-    '''
-    btns.append([InlineKeyboardButton(text=string, callback_data=f'setFavourite_{tovar_id}_{count}')])
-    btns.append([InlineKeyboardButton(text=f'➖', callback_data=f'minusCount_{tovar_id}_{count}'),
-          InlineKeyboardButton(text=f'{count}', callback_data=f'v'),
-          InlineKeyboardButton(text=f'➕', callback_data=f'plusCount_{tovar_id}_{count}')])
-    btns.append([InlineKeyboardButton(text='Добавить в корзину', callback_data=f'basketAdd_{tovar_id}_{count}')])
-    btns.append([InlineKeyboardButton(text='Назад', callback_data=f'back_to_tovars_{category_id}')])
-    return InlineKeyboardMarkup(inline_keyboard=btns)
 
-
-def favourite_markup(user_id):
-    m1 = db_users.favourite_list(user_id)
-    btns = []
-    for i in m1:
-        btns.append([InlineKeyboardButton(text=f'{i[1]}', callback_data=f'tovar_{i[0]}'),
-                    InlineKeyboardButton(text='Убрать', callback_data=f'delFavourite_{i[0]}')])
-    if len(m1) > 0:
-        btns.append([InlineKeyboardButton(text='Очистить список избранного', callback_data='cleanFavourite')])
+async def favourite_markup(user_id):
+    tovar_list = await tovar_favourite_list(user_id)
+    btns = list()
+    for tovar in tovar_list:
+        btns.append([InlineKeyboardButton(text=f'{tovar["name"]}', callback_data=f'tovar_{tovar["tovar_id"]}'),
+                    InlineKeyboardButton(text='Убрать', callback_data=f'delFavourite_{tovar["tovar_id"]}')])
+    if len(tovar_list) > 0:
+        btns.append([InlineKeyboardButton(text='Очистить список избранного', callback_data='clearFavourite')])
     btns.append([InlineKeyboardButton(text='Назад', callback_data='back_to_menu')])
-    markup = InlineKeyboardMarkup(inline_keyboard=btns)
-
-    return markup
+    return InlineKeyboardMarkup(inline_keyboard=btns)
 
 
 def basket_markup(user_id):
