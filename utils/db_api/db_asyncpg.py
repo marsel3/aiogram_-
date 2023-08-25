@@ -62,11 +62,17 @@ async def tovar_set_favourite(tovar_id, user_id):
     async with dp['db_pool'].acquire() as connection:
         async with connection.transaction():
             if await tovar_is_favourite(tovar_id=tovar_id, user_id=user_id):
-                await connection.execute('DELETE FROM "favourite" WHERE "tovar_id" = $1 AND "user_id" = $2',
-                                         tovar_id, user_id)
+                await tovar_favourite_del(tovar_id, user_id)
             else:
                 await connection.execute('INSERT INTO "favourite" ("tovar_id", "user_id") VALUES ($1, $2)',
                                          tovar_id, user_id)
+
+async def tovar_favourite_del(tovar_id, user_id):
+    async with dp['db_pool'].acquire() as connection:
+        async with connection.transaction():
+            await connection.execute('DELETE FROM "favourite" WHERE "tovar_id" = $1 AND "user_id" = $2',
+                                     tovar_id, user_id)
+
 
 async def tovar_favourite_clear(user_id):
     async with dp['db_pool'].acquire() as connection:
