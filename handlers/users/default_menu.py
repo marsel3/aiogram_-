@@ -1,13 +1,15 @@
 from aiogram import types
-from loader import dp, db_users
+from loader import dp
 from keyboards.inline import inline_kb_menu
+from utils.db_api.db_asyncpg import *
 
 
 @dp.message_handler(text=['🗂️ Каталог', 'каталог', "Назад в каталог"])
 async def show_catalog(message: types.Message):
     #await message.delete()
+    categories = await category_list()
     await message.answer(f'Вы перешли в каталог, выберите категорию нужного вам товара.',
-                         reply_markup=inline_kb_menu.catalog_markup())
+                         reply_markup=await inline_kb_menu.categories_markup(categories))
 
 
 @dp.message_handler(text=['🛍️ Корзина', 'корзина'])
@@ -23,7 +25,6 @@ async def show_favourite(message: types.Message):
                          reply_markup=inline_kb_menu.favourite_markup(message.from_user.id))
 
 
-#@dp.message_handler(text=['📲️Помощь', 'помощь'])
 @dp.message_handler(text=['📲️Контакты', 'контакты'])
 async def show_contact(message: types.Message):
     # await message.delete()
@@ -34,14 +35,13 @@ async def show_contact(message: types.Message):
                          f'\n\n📲️ Telegram: @marssak'
                          f'\n\nℹ️г. Казань, метро Площадь Габдуллы Тукая',
                                reply_markup=inline_kb_menu.back_to_menu)
-"""    await message.answer(f'Иногда лучшая помощь человеку - это просто не мешать. ☝️',
+    """await message.answer(f'Иногда лучшая помощь человеку - это просто не мешать. ☝️',
                          reply_markup=inline_kb_menu.back_to_menu)"""
 
 
 @dp.message_handler(text=['👤 Профиль', 'профиль'])
 async def show_profile(message: types.Message):
-    #await message.delete()
-    print(message.from_user.id)
+    # await message.delete()
     amount = db_users.total_amount(message.from_user.id)
     sale = 0
     await message.answer(f'Профиль\nВаше Имя: {message.from_user.full_name}'

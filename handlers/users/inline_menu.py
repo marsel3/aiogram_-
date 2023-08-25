@@ -1,10 +1,10 @@
 from aiogram.types import CallbackQuery
-from loader import dp, db_tovars, db_users
-from states.state import State1
+from loader import dp
 from keyboards.inline import inline_kb_menu
 from aiogram.dispatcher import FSMContext
 from aiogram import types
 from handlers.users import default_menu
+from utils.db_api.db_asyncpg import *
 
 
 @dp.callback_query_handler(text='test1')
@@ -14,15 +14,46 @@ async def show_catalog(call: CallbackQuery):
 
 @dp.callback_query_handler(text='back_to_menu')
 async def back_to_menu(call: CallbackQuery):
-    await call.message.edit_text('Вы вернулись в главное меню\nНажимай на каталог и начинай собирать заказ 😉')
+    await call.message.edit_text(text='Вы вернулись в главное меню\nНажимай на каталог и начинай собирать заказ 😉')
 
 
 @dp.callback_query_handler(text='back_to_catalog')
 async def back_to_catalog(call: CallbackQuery):
-    await call.message.answer(f'Вы перешли в каталог, выберите категорию нужного вам товара.',
-                              reply_markup=inline_kb_menu.catalog_markup())
+    await call.message.answer('kek')
+    categories = await category_list()
+    await call.message.edit_text(text=f'Вы перешли в каталог, выберите категорию нужного вам товара.',
+                                 reply_markup=await inline_kb_menu.categories_markup(categories))
 
 
+@dp.callback_query_handler(text_startswith='category_')
+async def tovar_list(call: CallbackQuery):
+    category_id = int(call.data.split('_')[1])
+    tovar_list = await tovar_by_category(category_id)
+    text = f'Какой товар выберите?  😏'
+    markup = await inline_kb_menu.tovar_markup(tovar_list)
+    try:
+        await call.message.edit_text(text=text, reply_markup=markup)
+    except:
+        await call.message.answer(text=text, reply_markup=markup)
+        await call.message.delete()
+
+
+@dp.callback_query_handler(text_startswith='tovar_')
+async def tovar_info(call: CallbackQuery):
+    tovar_id = int(call.data.split('_')[1])
+    tovar_info = await tovar_by_id(tovar_id)
+
+    text = f'{tovar_info["name"]}: \t{tovar_info["price"]}₽ \n\n{tovar_info["disc"]}'
+    photo = tovar_info["photo"]
+    markup = await inline_kb_menu.tovar_card_markup(tovar_id, 1)
+
+    await call.message.delete()
+    try:
+        await call.message.answer_photo(photo=photo, caption=text, reply_markup=markup)
+    except:
+        await call.message.answer(text=text, reply_markup=markup)
+
+"""
 @dp.callback_query_handler(text='search')
 async def search(call: CallbackQuery):
     await dp.bot.delete_message(call.message.chat.id, call.message.message_id)
@@ -139,39 +170,6 @@ async def basketAdd_(call: CallbackQuery):
     await call.message.edit_reply_markup(reply_markup=inline_kb_menu.tovar_card_markup(tovar_id,
                                                                                        call.from_user.id, count))
 
-"""@dp.callback_query_handler(text_startswith='basketAdd_')
-async def basketAdd_(call: CallbackQuery):
-    tovar_id = call.data[10:]
-
-    await State1.tovar_id.set()
-    state = dp.get_current().current_state()
-    async with state.proxy() as data:
-        data["tovar_id"] = tovar_id
-
-    tovar_name = db_tovars.tovar_name(tovar_id)
-    await dp.bot.delete_message(call.message.chat.id, call.message.message_id)
-    await call.message.answer(f'Введите количество необходимого товара "{tovar_name}":')
-    await State1.count.set()
-
-@dp.message_handler(state=State1.count)
-async def add_to_basket(message: types.Message, state: FSMContext):
-    answer = message.text
-    markup = inline_kb_menu.catalog_markup()
-    if answer.isdigit() and int(answer) > 0:
-        async with state.proxy() as data:
-            tovar_id = data['tovar_id']
-        tovar_name = db_tovars.tovar_name(tovar_id)
-        tovar_price = db_tovars.tovar_price(tovar_id)
-        db_users.basket_add(tovar_id, message.from_user.id, tovar_name, tovar_price, count=int(answer))
-        await message.answer(f'Товар доавлен в корзину 😉\nВы перешли в каталог, выберите категорию нужного вам товара.',
-                             reply_markup=markup)
-    else:
-        await message.answer(f'Товар не добавлен 😟. В следующий раз вводи число😉'
-                             f'\nВы перешли в каталог, выберите категорию нужного вам товара.',
-                             reply_markup=markup)
-    await state.finish()
-"""
-
 @dp.callback_query_handler(text_startswith='delTovar_')
 async def setCount_(call: CallbackQuery):
    tovar_id = call.data[9:]
@@ -214,3 +212,4 @@ async def set_to_basket(message: types.Message, state: FSMContext):
     await default_menu.show_basket(message)
 
 
+"""

@@ -1,6 +1,5 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-from loader import db_tovars, db_users
-from data.config import admins_id
+from utils.db_api.db_asyncpg import *
 
 
 back_to_menu = InlineKeyboardMarkup(inline_keyboard=[
@@ -10,29 +9,35 @@ back_to_menu = InlineKeyboardMarkup(inline_keyboard=[
 )
 
 
-def catalog_markup():
-    m1 = db_tovars.category()
-
-    btns = []
+async def categories_markup(categories):
+    btns = list()
     btns.append([InlineKeyboardButton(text='Поиск товара', callback_data='search')])
-    for i in m1:
-        btns.append([InlineKeyboardButton(text=f'{i[1]}', callback_data=f'category_id{i[0]}')])
+    for category in categories:
+        btns.append([InlineKeyboardButton(text=f'{category["category"]}', callback_data=f'category_{category["id"]}')])
     btns.append([InlineKeyboardButton(text='Назад', callback_data='back_to_menu')])
 
     return InlineKeyboardMarkup(inline_keyboard=btns)
 
 
-def tovar_markup(catalog):
-    m1 = db_tovars.tovar(catalog)
+async def tovar_markup(tovars):
     markup = InlineKeyboardMarkup()
-    for i in m1:
-        markup.add(InlineKeyboardButton(text=f'{i[1]}', callback_data=f'tovar_{i[0]}'))
+    for tovar in tovars:
+        markup.add(InlineKeyboardButton(text=f'{tovar["name"]}', callback_data=f'tovar_{tovar["id"]}'))
     markup.add(InlineKeyboardButton(text='Назад в каталог', callback_data='back_to_catalog'))
-
     return markup
 
 
-def tovar_card_markup(tovar_id, user_id, count):
+async def tovar_card_markup(tovar_id, count):
+    btns = []
+    category_id = await category_by_tovar(tovar_id)
+    btns.append([InlineKeyboardButton(text=f'➖', callback_data=f'minusCount_{tovar_id}_{count}'),
+          InlineKeyboardButton(text=f'{count}', callback_data=f'setCategory_{tovar_id}'),
+          InlineKeyboardButton(text=f'➕', callback_data=f'plusCount_{tovar_id}_{count}')])
+    btns.append([InlineKeyboardButton(text='Назад', callback_data=f'category_{category_id}')])
+    return InlineKeyboardMarkup(inline_keyboard=btns)
+
+
+def tovar_card_markup2(tovar_id, user_id, count):
     category_id = db_tovars.category_id(tovar_id)
     btns = []
     string = "Добавить в избранное"
