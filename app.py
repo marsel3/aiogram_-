@@ -17,7 +17,7 @@ async def create_db_pool(dp):
         user='mars',
         password='mars',
         host='45.130.42.176',
-        database='shop',
+        database='shopdemo',
         max_size=100,
     )
 

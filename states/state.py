@@ -17,9 +17,9 @@ class SetCountInBasket(StatesGroup):
     count = State()
 
 
-
 class FSMAdmin(StatesGroup):
-    category_id = State()
+    msg_list = State()
+    category = State()
 
     tovar_name = State()
     tovar_price = State()
@@ -30,9 +30,12 @@ class FSMAdmin(StatesGroup):
 
 
 class FSMAdminEdit(StatesGroup):
+    msg_list = State()
     category_id = State()
-
+    category_name = State()
     tovar_name = State()
     tovar_price = State()
     tovar_disc = State()
     tovar_photo = State()
+
+    agreement = State()

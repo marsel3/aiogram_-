@@ -15,6 +15,12 @@ async def add_user(user_id: int, fio: str, referral=None):
                                      'VALUES ($1, $2, $3)', user_id, fio, referral)
 
 
+async def user_list():
+    async with dp['db_pool'].acquire() as connection:
+        async with connection.transaction():
+            return await connection.fetch('SELECT * FROM "users"')
+
+
 async def category_list():
     async with dp['db_pool'].acquire() as connection:
         async with connection.transaction():
@@ -120,4 +126,44 @@ async def basket_tovar_del(tovar_id, user_id):
             await connection.execute('DELETE FROM "basket" WHERE "tovar_id" = $1 AND "user_id" = $2',
                                      tovar_id, user_id)
 
+
+# Для администратора, добавление нового
+async def category_name_by_id(id):
+    async with dp['db_pool'].acquire() as connection:
+        async with connection.transaction():
+            result = await connection.fetchrow('SELECT "category" FROM "category" WHERE "id"=$1', id)
+            return result["category"] if result else None
+
+
+async def add_category(category):
+    async with dp['db_pool'].acquire() as connection:
+        async with connection.transaction():
+            await connection.execute('INSERT INTO "category" ("category") VALUES ($1)', category)
+
+
+async def del_category(id):
+    async with dp['db_pool'].acquire() as connection:
+        async with connection.transaction():
+            await connection.execute('DELETE FROM "category" WHERE "id"=$1', id)
+
+
+async def edit_category_name(id, category):
+    async with dp['db_pool'].acquire() as connection:
+        async with connection.transaction():
+            await connection.execute('UPDATE "category" SET "category"=$1 WHERE "id"=$2', category, id)
+
+
+async def add_tovar(category, name, price, disc, photo=None):
+    async with dp['db_pool'].acquire() as connection:
+        async with connection.transaction():
+            result = await connection.fetchrow('INSERT INTO "tovar" ("category_id", "name", "price", "disc", "photo") '
+                                               'VALUES ($1, $2, $3, $4, $5)  RETURNING "id"',
+                                               category, name, price, disc, photo)
+            return result["id"]
+
+
+async def del_tovar(id):
+    async with dp['db_pool'].acquire() as connection:
+        async with connection.transaction():
+            await connection.execute('DELETE FROM "tovar" WHERE "id"=$1', id)
 

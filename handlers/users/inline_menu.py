@@ -22,6 +22,21 @@ async def try_delete_call(call: types.CallbackQuery):
         pass
 
 
+async def try_delete_msg(chatId, msgId):
+    try:
+        await dp.bot.delete_message(chat_id=chatId, message_id=msgId)
+    except:
+        pass
+
+
+async def try_edit_call(callback, text, markup):
+    try:
+        msg = await callback.message.edit_text(text=text, parse_mode='HTML', reply_markup=markup)
+    except:
+        await try_delete_call(callback)
+        msg = await callback.message.answer(text=text, parse_mode='HTML', reply_markup=markup)
+    return msg
+
 
 async def send_tovar_info(chatId, msgId, tovar_id, user_id, count=1):
     tovar_info = await tovar_by_id(tovar_id)
@@ -59,11 +74,7 @@ async def tovar_list(call: types.CallbackQuery):
     tovar_list = await tovar_by_category(category_id)
     text = f'Какой товар выберите?  😏'
     markup = await inline_kb_menu.tovar_markup(tovar_list)
-    try:
-        await call.message.edit_text(text=text, reply_markup=markup)
-    except:
-        await call.message.answer(text=text, reply_markup=markup)
-        await try_delete_call(call)
+    await try_edit_call(callback=call, text=text, markup=markup)
 
 
 @dp.callback_query_handler(text_startswith='tovar_')
@@ -122,6 +133,7 @@ async def setFavourite_(call: types.CallbackQuery):
     await call.message.edit_reply_markup(await inline_kb_menu.tovar_card_markup(tovar_id=tovar_id,
                                                                                 count=int(call.data.split('_')[2]),
                                                                                 user_id=int(call.from_user.id)))
+
 
 @dp.callback_query_handler(text_startswith='basketAdd_')
 async def basketAdd_(call: types.CallbackQuery):
@@ -201,9 +213,7 @@ async def search(call: types.CallbackQuery):
 @dp.message_handler(state=Search.tovar_name)
 async def search_tovar(message: types.Message, state: FSMContext):
     tovar_list = await search_tovar_by_name(message.text)
-    if len(tovar_list) > 0:
-        text = 'Список найденных товаров'
-    else:
-        text = 'Товар не найден 😟'
+    text = 'Список найденных товаров' if len(tovar_list) > 0 else 'Товар не найден 😟'
+
     await message.answer(text=text, reply_markup=await inline_kb_menu.tovar_markup(tovar_list))
     await state.finish()
