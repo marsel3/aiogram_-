@@ -1,8 +1,8 @@
 from aiogram import types
-
-from loader import dp, db_users
+from loader import dp
 from keyboards.default import keyboard_menu
 from utils.db_api.db_asyncpg import *
+
 
 @dp.message_handler()
 async def main(message: types.Message):
@@ -17,4 +17,3 @@ async def main(message: types.Message):
                          f'\nНажимай на каталог и начинай собирать заказ 😉',
                          reply_markup=keyboard_menu.main)
     await message.delete()
-
