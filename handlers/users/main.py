@@ -1,8 +1,8 @@
 from aiogram import types
-from loader import dp
+
+from loader import dp, db_users
 from keyboards.default import keyboard_menu
 from utils.db_api.db_asyncpg import *
-
 
 @dp.message_handler()
 async def main(message: types.Message):
