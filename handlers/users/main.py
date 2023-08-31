@@ -1,8 +1,13 @@
 from aiogram import types
-
-from loader import dp, db_users
+from utils.db_api.db_asyncpg import *
+from loader import dp
 from keyboards.default import keyboard_menu
 from handlers.users.commands import start
+
+
+def extract_unique_code(text):
+    return int(text.split()[1]) if len(text.split()) > 1 else None
+
 
 @dp.message_handler()
 async def main(message: types.Message):
@@ -13,7 +18,6 @@ async def main(message: types.Message):
         if unique_code and await user_exists(unique_code):
             referral = unique_code
 
-        print(referral)
         await add_user(user_id=message.from_user.id,
                        fio=message.from_user.full_name,
                        referral=referral)
