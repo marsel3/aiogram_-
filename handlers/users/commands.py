@@ -9,7 +9,7 @@ def extract_unique_code(text):
 
 
 @dp.message_handler(commands='start')
-async def start(message: types.Message):
+async def start_msg(message: types.Message):
     exists = await user_exists(message.from_user.id)
     if not exists:
         referral = None
