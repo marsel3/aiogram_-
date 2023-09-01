@@ -8,6 +8,9 @@ cancel = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text='Отмена')]],
 without_photo = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text='Без фото', callback_data='without_photo')]],
                                     resize_keyboard=True)
 
+withoutdesc = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text='Без описания')]],
+                                  resize_keyboard=True)
+
 agreement = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text='Да')],
                                           [KeyboardButton(text='Нет')]],
                                 resize_keyboard=True)

@@ -146,7 +146,7 @@ async def AddNewTovar_price(message: types.Message, state: FSMContext):
 
         elif message.text.isdigit():
             data["tovar_price"] = int(message.text)
-            msg = await message.answer("Отправьте описание товара", reply_markup=None)
+            msg = await message.answer("Отправьте описание товара", reply_markup=admin_keyboards.withoutdesc)
             data["msg_list"].append(msg.message_id)
             await FSMAdmin.next()
 
@@ -168,7 +168,7 @@ async def AddNewTovar_disc(message: types.Message, state: FSMContext):
             await message.answer(text=f'Вы в меню редактора категории «{category}»',
                                  reply_markup=await admin_keyboards.admin_tovars_markup(data["category_id"]))
         else:
-            data["tovar_disc"] = message.text
+            data["tovar_disc"] = message.text if message.text != 'Без описания' else None
             msg = await message.answer("Отправьте фото товара", reply_markup=admin_keyboards.without_photo)
             data["msg_list"].append(msg.message_id)
             await FSMAdmin.next()
@@ -187,7 +187,8 @@ async def AddNewTovar_without_photo(message: types.Message, state: FSMContext):
                                  reply_markup=await admin_keyboards.admin_tovars_markup(data["category_id"]))
         else:
             data["tovar_photo"] = None
-            msg = await message.answer(text=f'{data["tovar_name"]}: \t{data["tovar_price"]} руб. \n\n{data["tovar_disc"]}')
+            disc = f'\n\nОписание: <code>{data["tovar_disc"]}</code>' if data["tovar_disc"] else ''
+            msg = await message.answer(text=f'{data["tovar_name"]}: \t{data["tovar_price"]} руб.{disc}')
             msg2 = await message.answer(f'Всё верно?', reply_markup=admin_keyboards.agreement)
             data["msg_list"].append(msg.message_id)
             data["msg_list"].append(msg2.message_id)
@@ -199,8 +200,9 @@ async def AddNewTovar_photo(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data["msg_list"].append(message.message_id)
         data["tovar_photo"] = message.photo[0].file_id
-
-        msg = await message.answer_photo(photo=data["tovar_photo"], caption=f'{data["tovar_name"]}: \t{data["tovar_price"]} руб. \n\n{data["tovar_disc"]}')
+        disc = f'\n\nОписание: <code>{data["tovar_disc"]}</code>' if data["tovar_disc"] else ''
+        msg = await message.answer_photo(photo=data["tovar_photo"], caption=f'{data["tovar_name"]}:'
+                                                                            f' \t{data["tovar_price"]} руб.{disc}')
         msg2 = await message.answer(f'Всё верно?', reply_markup=admin_keyboards.agreement)
         data["msg_list"].append(msg.message_id)
         data["msg_list"].append(msg2.message_id)
@@ -230,8 +232,8 @@ async def FSMAdmin_agreement(message: types.Message, state: FSMContext):
 
 async def send_admin_tovar(chatId, msgId, tovar_id):
     tovar_info = await tovar_by_id(tovar_id)
-
-    text = f'{tovar_info["name"]}: \t{tovar_info["price"]}₽ \n\n{tovar_info["disc"]}'
+    disc = f'\n\nОписание: <code>{tovar_info["disc"]}</code>' if tovar_info["disc"] else ''
+    text = f'{tovar_info["name"]}: \t{tovar_info["price"]}₽{disc}'
     photo = tovar_info["photo"]
     markup = await admin_keyboards.admin_tovar_markup(tovar_id)
 

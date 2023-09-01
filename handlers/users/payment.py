@@ -1,7 +1,7 @@
 from aiogram.types import Message, ShippingOption, ShippingQuery, LabeledPrice, PreCheckoutQuery
 from aiogram.types.message import ContentType
 from aiogram.types import CallbackQuery
-from data.config import admins_id
+from utils.db_api.db_asyncpg import admin_list
 from utils.db_api.db_asyncpg import *
 from data.config import PAYMENT_TOKEN
 from loader import dp
@@ -84,7 +84,7 @@ async def successful_payment(message: Message):
     for key, val in pmnt.items():
         print(f'{key} = {val}')
 
-    for admin in admins_id:
+    for admin in [i["user_id"] for i in await admin_list()]:
         try:
             text = f'Пользователь {user_name} оплатил заказ на сумму {message.successful_payment.total_amount / 100}₽' \
                    f'\n\nДанные пользователя: ' \

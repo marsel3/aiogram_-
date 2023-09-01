@@ -41,7 +41,8 @@ async def try_edit_call(callback, text, markup):
 async def send_tovar_info(chatId, msgId, tovar_id, user_id, count=1):
     tovar_info = await tovar_by_id(tovar_id)
 
-    text = f'{tovar_info["name"]}: \t{tovar_info["price"]}₽ \n\n{tovar_info["disc"]}'
+    disc = f'\n\nОписание: <code>{tovar_info["disc"]}</code>' if tovar_info["disc"] else ''
+    text = f'<b>{tovar_info["name"]}</b>: \t{tovar_info["price"]}₽{disc}'
     photo = tovar_info["photo"]
     markup = await inline_kb_menu.tovar_card_markup(tovar_id, count, user_id)
 

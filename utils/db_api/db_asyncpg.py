@@ -8,11 +8,17 @@ async def user_exists(user_id: int):
             return result is not None
 
 
+async def admin_list():
+    async with dp['db_pool'].acquire() as connection:
+        async with connection.transaction():
+            return await connection.fetch('SELECT "user_id" FROM "users" WHERE "status"=$1', 'admin')
+
+
 async def add_user(user_id: int, fio: str, referral=None):
     async with dp['db_pool'].acquire() as connection:
         async with connection.transaction():
-            await connection.execute('INSERT INTO "users" ("user_id", "fio", "referral") '
-                                     'VALUES ($1, $2, $3)', user_id, fio, referral)
+            await connection.execute('INSERT INTO "users" ("user_id", "fio", "referral", "status") '
+                                     'VALUES ($1, $2, $3, $4)', user_id, fio, referral, 'user')
 
 
 async def user_list():
@@ -153,7 +159,7 @@ async def edit_category_name(id, category):
             await connection.execute('UPDATE "category" SET "category"=$1 WHERE "id"=$2', category, id)
 
 
-async def add_tovar(category, name, price, disc, photo=None):
+async def add_tovar(category, name, price, disc=None, photo=None):
     async with dp['db_pool'].acquire() as connection:
         async with connection.transaction():
             result = await connection.fetchrow('INSERT INTO "tovar" ("category_id", "name", "price", "disc", "photo") '
