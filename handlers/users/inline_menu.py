@@ -85,7 +85,6 @@ async def tovar_info(call: types.CallbackQuery):
                           user_id=call.from_user.id)
 
 
-
 @dp.callback_query_handler(text_startswith='minusCount_')
 async def minusCount_(call: types.CallbackQuery):
     pas, tovar_id, count = call.data.split('_')
@@ -94,7 +93,6 @@ async def minusCount_(call: types.CallbackQuery):
         await call.message.edit_reply_markup(reply_markup=await inline_kb_menu.tovar_card_markup(tovar_id=int(tovar_id),
                                                                                                  count=count-1,
                                                                                                  user_id=int(call.from_user.id)))
-
 
 @dp.callback_query_handler(text_startswith='plusCount_')
 async def plusCount_(call: types.CallbackQuery):
@@ -159,6 +157,12 @@ async def clearFavourite(call: types.CallbackQuery):
     user_id = int(call.from_user.id)
     await tovar_favourite_clear(user_id=user_id)
     await call.message.edit_reply_markup(reply_markup=await inline_kb_menu.favourite_markup(user_id))
+
+
+@dp.callback_query_handler(text_startswith='ApplyBonus_')
+async def ApplyBonus_(call: types.CallbackQuery):
+    await try_delete_call(call)
+    await send_basket(chat_id=call.message.chat.id, user_id=call.from_user.id, bonus=eval(call.data.split('_')[1]))
 
 
 @dp.callback_query_handler(text_startswith='delBasket_')

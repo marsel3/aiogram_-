@@ -1,7 +1,6 @@
 from aiogram.types import Message, ShippingOption, ShippingQuery, LabeledPrice, PreCheckoutQuery
 from aiogram.types.message import ContentType
 from aiogram.types import CallbackQuery
-from utils.db_api.db_asyncpg import admin_list
 from utils.db_api.db_asyncpg import *
 from data.config import PAYMENT_TOKEN
 from loader import dp
@@ -24,22 +23,27 @@ PICKUP_SHIPPING_OPTION.add(LabeledPrice('Самовывоз в Казани', 10
 @dp.callback_query_handler(text='pay')
 async def buy_process(call: CallbackQuery):
     PRICES = []
+    summ = 0
     tovars = await basket_list(call.from_user.id)
     for tovar in tovars:
         PRICES.append(LabeledPrice(tovar["name"], int(tovar["price"] * tovar["count"] * 100)))
-    await dp.bot.delete_message(call.message.chat.id, call.message.message_id)
-    await dp.bot.send_invoice(
-        chat_id=call.message.chat.id,
-        title='Заказ № ???',
-        description='самовывоз',
-        provider_token=PAYMENT_TOKEN,
-        currency='RUB',
-        need_email=True,
-        need_phone_number=True,
-        is_flexible=True,
-        prices=PRICES,
-        start_parameter='example',
-        payload='some_invoice')
+        summ += tovar["price"] * tovar["count"]
+    if summ <= 50:
+        await call.message.answer('Мы принимаем заказы от 50 рублей')
+    else:
+        await dp.bot.delete_message(call.message.chat.id, call.message.message_id)
+        await dp.bot.send_invoice(
+            chat_id=call.message.chat.id,
+            title='Заказ № ???',
+            description='самовывоз',
+            provider_token=PAYMENT_TOKEN,
+            currency='RUB',
+            need_email=True,
+            need_phone_number=True,
+            is_flexible=True,
+            prices=PRICES,
+            start_parameter='example',
+            payload='some_invoice')
 
 
 @dp.shipping_query_handler(lambda q: True)

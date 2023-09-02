@@ -8,6 +8,14 @@ async def user_exists(user_id: int):
             return result is not None
 
 
+async def user_info_by_id(user_id):
+    async with dp['db_pool'].acquire() as connection:
+        async with connection.transaction():
+            return await connection.fetchrow('SELECT u.*, '
+                                             '(SELECT COUNT(*) FROM "users" WHERE "referral" = $1) AS referral_count '
+                                             'FROM "users" AS u WHERE "user_id" = $1', user_id)
+
+
 async def admin_list():
     async with dp['db_pool'].acquire() as connection:
         async with connection.transaction():
@@ -17,8 +25,8 @@ async def admin_list():
 async def add_user(user_id: int, fio: str, referral=None):
     async with dp['db_pool'].acquire() as connection:
         async with connection.transaction():
-            await connection.execute('INSERT INTO "users" ("user_id", "fio", "referral", "status") '
-                                     'VALUES ($1, $2, $3, $4)', user_id, fio, referral, 'user')
+            await connection.execute('INSERT INTO "users" ("user_id", "fio", "bonus", "referral", "status") '
+                                     'VALUES ($1, $2, $3, $4, $5)', user_id, fio, 10, referral, 'user')
 
 
 async def user_list():

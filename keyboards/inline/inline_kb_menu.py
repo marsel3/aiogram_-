@@ -56,7 +56,7 @@ async def favourite_markup(user_id):
     return InlineKeyboardMarkup(inline_keyboard=btns)
 
 
-async def basket_markup(basket):
+async def basket_markup(basket, bonus=False):
     btns = list()
     if len(basket) > 0:
         for tovar in basket:
@@ -65,6 +65,9 @@ async def basket_markup(basket):
                          InlineKeyboardButton(text=f'{tovar["count"]} шт.', callback_data=f'setCountInBasket_{tovar["id"]}'),
                          InlineKeyboardButton(text=f'🗑', callback_data=f'delBasket_{tovar["id"]}')])
         btns.append([InlineKeyboardButton(text='Очистить корзину', callback_data='clearBasket')])
+
+        btns.append([InlineKeyboardButton(text='Не списывать бонусные рубли' if bonus else 'Cписывать бонусные рубли',
+                                          callback_data=f'ApplyBonus_{not bonus}')])
         btns.append([InlineKeyboardButton(text='Оформить заказ', callback_data='pay')])
     btns.append([InlineKeyboardButton(text='Назад', callback_data='back_to_menu')])
     return InlineKeyboardMarkup(inline_keyboard=btns)
