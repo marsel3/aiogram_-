@@ -1,6 +1,12 @@
 from aiogram.dispatcher.filters.state import StatesGroup, State
 
 
+class AdminSpam(StatesGroup):
+    msg_list = State()
+    text = State()
+    confirm = State()
+
+
 class Search(StatesGroup):
     tovar_name = State()
 

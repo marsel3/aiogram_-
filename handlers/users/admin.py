@@ -2,7 +2,7 @@ from filters import IsAdmin
 from aiogram import types
 from loader import dp
 from aiogram.dispatcher import FSMContext
-from states.state import FSMAdmin, FSMAdminEdit
+from states.state import FSMAdmin, FSMAdminEdit, AdminSpam
 from keyboards import admin_keyboards
 from utils.db_api.db_asyncpg import *
 from handlers.users.inline_menu import try_edit_call, try_delete_call, delete_messages, try_delete_msg
@@ -18,6 +18,61 @@ async def admin(messsage: types.Message):
 async def admin_panel(call: types.CallbackQuery):
     await try_edit_call(callback=call, markup=admin_keyboards.admin_panel,
                         text=f'Здравствуйте, {call.from_user.full_name},  вы попали в админ панель!')
+
+
+@dp.callback_query_handler(text='admin_send_message')
+async def admin_send_message(call: types.CallbackQuery):
+    msg = await try_edit_call(callback=call, markup=admin_keyboards.cancel,
+                              text=f'Введите сообщения для рассылки всем пользователям')
+    await AdminSpam.msg_list.set()
+    state = dp.get_current().current_state()
+    async with state.proxy() as data:
+        data["msg_list"] = [msg.message_id]
+    await AdminSpam.next()
+
+
+@dp.message_handler(state=AdminSpam.text)
+async def AdminSpam_text(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data["msg_list"].append(message.message_id)
+        if message.text.lower() == 'отмена':
+            msg = await message.answer('Рассылка отменена!', reply_markup=None)
+            data["msg_list"].append(msg.message_id)
+            await admin(message)
+            await state.finish()
+            await delete_messages(messages=data["msg_list"], chat_id=message.chat.id)
+
+        else:
+            data["text"] = message.text
+            msg = await message.answer(text=data["text"])
+            msg2 = await message.answer("Всё верно?", reply_markup=admin_keyboards.agreement)   # Для удаления клавы
+            data["msg_list"].append(msg.message_id)
+            data["msg_list"].append(msg2.message_id)
+            await AdminSpam.confirm.set()
+
+
+@dp.message_handler(state=AdminSpam.confirm)
+async def AdminSpam_confirm(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data["msg_list"].append(message.message_id)
+        if message.text.lower() == 'да':
+            await delete_messages(messages=data["msg_list"], chat_id=message.chat.id)
+            await state.finish()
+            users = await user_list()
+            msg = await message.answer('Бот начал рассылку!')
+            for user in users:
+                try:
+                    await dp.bot.send_message(chat_id=user["user_id"], text=data["text"])
+                except:
+                    pass
+            await message.answer('Рассылка завершена!', reply_markup=None)
+        else:
+            await message.answer('Рассылка отменена!', reply_markup=None)
+
+    data["msg_list"].append(msg.message_id)
+    await delete_messages(messages=data["msg_list"], chat_id=message.chat.id)
+    await admin(message)
+    await state.finish()
 
 
 @dp.callback_query_handler(text='admin_statistic')

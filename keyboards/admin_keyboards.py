@@ -18,6 +18,7 @@ agreement = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text='Да')],
 
 admin_panel = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text='⚙️ Редактор категорий', callback_data='admin_all_categories')],
+        [InlineKeyboardButton(text='📢 Сделать рассылку', callback_data='admin_send_message')],
         [InlineKeyboardButton(text='📊 Статистика', callback_data='admin_statistic')],
         [InlineKeyboardButton(text='Назад', callback_data='back_to_menu')]
     ]
