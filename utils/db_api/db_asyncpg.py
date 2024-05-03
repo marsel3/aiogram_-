@@ -146,10 +146,13 @@ async def tovar_add_to_basket(user_id, product_id, count):
     async with dp['db_pool'].acquire() as connection:
         async with connection.transaction():
             dt = datetime.datetime.now()
-            await connection.execute('INSERT INTO "basket" ("user_id", "product_id", "count", "dt") '
-                                     'VALUES ($1, $2, $3, $4) ON CONFLICT ("user_id", "product_id") DO UPDATE '
-                                     'SET "count" = "basket"."count" + EXCLUDED."count" AND "dt"=$4',
-                                     user_id, product_id, count, dt)
+            await connection.execute(
+                'INSERT INTO "basket" ("user_id", "product_id", "count", "dt") '
+                'VALUES ($1, $2, $3, $4) '
+                'ON CONFLICT ("user_id", "product_id") DO UPDATE '
+                'SET "count" = "basket"."count" + EXCLUDED."count", "dt" = $4',
+                user_id, product_id, count, dt
+            )
 
 
 async def add_history(user_id, total):

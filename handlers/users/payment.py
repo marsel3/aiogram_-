@@ -26,7 +26,7 @@ async def buy_process(call: CallbackQuery):
     summ = 0
     tovars = await basket_list(call.from_user.id)
     for tovar in tovars:
-        PRICES.append(LabeledPrice(tovar["name"], int(tovar["price"] * tovar["count"] * 100)))
+        PRICES.append(LabeledPrice(tovar["tovar"], int(tovar["price"] * tovar["count"] * 100)))
         summ += tovar["price"] * tovar["count"]
     if summ <= 50:
         await call.message.answer('Мы принимаем заказы от 50 рублей')

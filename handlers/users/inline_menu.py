@@ -300,6 +300,12 @@ async def ApplyBonus_(call: types.CallbackQuery):
     await send_basket(chat_id=call.message.chat.id, user_id=call.from_user.id, bonus=eval(call.data.split('_')[1]))
 
 
+@dp.callback_query_handler(text_startswith='basket')
+async def basket_menu(call: types.CallbackQuery):
+    await try_delete_call(call)
+    await send_basket(chat_id=call.message.chat.id, user_id=call.from_user.id)
+
+
 @dp.callback_query_handler(text_startswith='delBasket_')
 async def delBasket_(call: types.CallbackQuery):
     user_id = int(call.from_user.id)
