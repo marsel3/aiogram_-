@@ -1,54 +1,162 @@
-from filters import IsAdmin
-from aiogram import types
 from loader import dp
+from filters import IsAdmin
+from keyboards.default import keyboard_menu
+from keyboards.inline import inline_kb_menu
+
+from aiogram import types
+from aiogram.types import InputFile
+from aiogram.utils.markdown import hlink
+import pandas as pd
+import io
+
 from aiogram.dispatcher import FSMContext
-from states.state import FSMAdmin, FSMAdminEdit, AdminSpam
-from keyboards import admin_keyboards
+from states.state import AdminSpam, FSMAdmin, FSMAdminDelete, FSMAdminEdit
 from utils.db_api.db_asyncpg import *
-from handlers.users.inline_menu import try_edit_call, try_delete_call, delete_messages, try_delete_msg
+
+
+async def tovar_info_text(title, price, description, page=1, pages=1, iscount=True):
+    msg_text = f'Товар [{page} из {pages}]' if iscount else ''
+
+    msg_text += f'\n\n<b>{title}</b>' \
+                f'\n\n<b>Цена</b>: <code>{price} ₽</code>' \
+                f'\n\n<b>Описание</b>:\n<code>{description}</code>'
+
+    return msg_text
+
+
+async def delete_messages(messages, chat_id):
+    for msg_id in messages:
+        try:
+            await dp.bot.delete_message(chat_id=chat_id, message_id=msg_id)
+        except:
+            pass
+
+
+async def try_delete_call(call: types.CallbackQuery):
+    try:
+        await call.message.delete()
+    except:
+        pass
+
+
+async def try_delete_msg(chatId, msgId):
+    try:
+        await dp.bot.delete_message(chat_id=chatId, message_id=msgId)
+    except:
+        pass
+
+
+async def try_edit_call(callback, text, markup):
+    try:
+        msg = await callback.message.edit_text(text=text, parse_mode='HTML', reply_markup=markup)
+    except:
+        await try_delete_call(callback)
+        msg = await callback.message.answer(text=text, parse_mode='HTML', reply_markup=markup)
+    return msg
+
+
+async def digit_check(digit):
+    digit = digit.replace(',', '.')
+    try:
+        digit = float(digit)
+        if digit >= 0:
+            return True
+        else:
+            return False
+    except ValueError:
+        return False
 
 
 @dp.message_handler(IsAdmin(), text='/admin')
-async def admin(messsage: types.Message):
+async def adminPanel(messsage: types.Message):
     await messsage.answer(f'Здравствуйте, {messsage.from_user.full_name},  вы попали в админ панель!',
-                          reply_markup=admin_keyboards.admin_panel)
+                          reply_markup=inline_kb_menu.admin)
 
 
-@dp.callback_query_handler(text='admin_panel')
-async def admin_panel(call: types.CallbackQuery):
-    await try_edit_call(callback=call, markup=admin_keyboards.admin_panel,
-                        text=f'Здравствуйте, {call.from_user.full_name},  вы попали в админ панель!')
+@dp.callback_query_handler(IsAdmin(), text='manager_main_menu')
+async def manager_call_menu(call: types.CallbackQuery):
+    msg_text = f'Здравствуйте, {call.from_user.full_name}, вы попали в меню менеджера!'
+    markup = inline_kb_menu.admin
+
+    await try_edit_call(callback=call, text=msg_text, markup=markup)
 
 
-@dp.callback_query_handler(text='admin_send_message')
+@dp.callback_query_handler(IsAdmin(), text='admin_all_users_info')
+async def admin_all_users_info(call: types.CallbackQuery):
+    await try_delete_call(call=call)
+    msg = await call.message.answer('Подождите, файл формируется...')
+
+    users = await get_all_users_data()
+    df = pd.DataFrame(users, columns=['№', "Telegram id", "ФИО", "Статус"])
+
+    excel_file_stream = io.BytesIO()
+    with pd.ExcelWriter(excel_file_stream, engine='xlsxwriter') as writer:
+        df.to_excel(writer, index=False, sheet_name='Users Info')
+        workbook = writer.book
+        worksheet = writer.sheets['Users Info']
+
+        for idx, col in enumerate(df.columns):
+            max_len = max(df[col].astype(str).str.len().max(), len(col)) + 2
+            worksheet.set_column(idx, idx, max_len)
+    excel_file_stream.seek(0)
+
+    await call.message.answer_document(document=InputFile(excel_file_stream, filename='Список пользователей.xlsx'),
+                                       reply_markup=inline_kb_menu.back_to_admin)
+    await dp.bot.delete_message(chat_id=call.message.chat.id, message_id=msg.message_id)
+
+
+@dp.callback_query_handler(IsAdmin(), text='admin_send_message')
 async def admin_send_message(call: types.CallbackQuery):
-    msg = await try_edit_call(callback=call, markup=admin_keyboards.cancel,
+    msg = await try_edit_call(callback=call, markup=keyboard_menu.cancel,
                               text=f'Введите сообщения для рассылки всем пользователям')
     await AdminSpam.msg_list.set()
     state = dp.get_current().current_state()
     async with state.proxy() as data:
         data["msg_list"] = [msg.message_id]
-    await AdminSpam.next()
+        data["callback"] = call
+
+    await AdminSpam.text.set()
 
 
-@dp.message_handler(state=AdminSpam.text)
+@dp.message_handler(state=AdminSpam.text, content_types=types.ContentType.ANY)
 async def AdminSpam_text(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data["msg_list"].append(message.message_id)
-        if message.text.lower() == 'отмена':
-            msg = await message.answer('Рассылка отменена!', reply_markup=None)
-            data["msg_list"].append(msg.message_id)
-            await admin(message)
-            await state.finish()
-            await delete_messages(messages=data["msg_list"], chat_id=message.chat.id)
+        if message.text:
+            if message.text.lower() == 'отмена':
+                msg = await message.answer('Рассылка отменена!', reply_markup=None)
+                data["msg_list"].append(msg.message_id)
+                await manager_call_menu(call=data["callback"])
+                await state.finish()
+                await delete_messages(messages=data["msg_list"], chat_id=message.chat.id)
 
-        else:
-            data["text"] = message.text
-            msg = await message.answer(text=data["text"])
-            msg2 = await message.answer("Всё верно?", reply_markup=admin_keyboards.agreement)   # Для удаления клавы
+            else:
+                data["text"] = message.html_text
+                msg = await message.answer(text=data["text"])
+                msg2 = await message.answer("Всё верно?", reply_markup=keyboard_menu.agreement)   # Для удаления клавы
+                data["msg_list"].append(msg.message_id)
+                data["msg_list"].append(msg2.message_id)
+                await AdminSpam.confirm.set()
+        elif message.video:
+            data["text"] = message.html_text
+            data["video"] = message.video.file_id
+            msg = await message.answer_video(caption=data["text"], video=data["video"])
+            msg2 = await message.answer("Всё верно?", reply_markup=keyboard_menu.agreement)  # Для удаления клавы
             data["msg_list"].append(msg.message_id)
             data["msg_list"].append(msg2.message_id)
             await AdminSpam.confirm.set()
+
+        elif message.photo:
+            data["text"] = message.html_text
+            data["photo"] = message.photo[0].file_id
+            msg = await message.answer_photo(caption=data["text"], photo=data["photo"])
+            msg2 = await message.answer("Всё верно?", reply_markup=keyboard_menu.agreement)  # Для удаления клавы
+            data["msg_list"].append(msg.message_id)
+            data["msg_list"].append(msg2.message_id)
+            await AdminSpam.confirm.set()
+
+        else:
+            await message.answer('Пока что я не поддерживаю такое сообщение для рассылки, напишите Марселю.')
 
 
 @dp.message_handler(state=AdminSpam.confirm)
@@ -58,11 +166,18 @@ async def AdminSpam_confirm(message: types.Message, state: FSMContext):
         if message.text.lower() == 'да':
             await delete_messages(messages=data["msg_list"], chat_id=message.chat.id)
             await state.finish()
-            users = await user_list()
+
+            users = await active_users_list()
             msg = await message.answer('Бот начал рассылку!')
             for user in users:
                 try:
-                    await dp.bot.send_message(chat_id=user["user_id"], text=data["text"])
+                    if "video" in data:
+                        if data["text"]:
+                            await dp.bot.send_video(chat_id=user["user_id"], video=data["video"], caption=data["text"])
+                        else:
+                            await dp.bot.send_video(chat_id=user["user_id"], video=data["video"])
+                    else:
+                        await dp.bot.send_message(chat_id=user["user_id"], text=data["text"])
                 except:
                     pass
             await message.answer('Рассылка завершена!', reply_markup=None)
@@ -71,21 +186,14 @@ async def AdminSpam_confirm(message: types.Message, state: FSMContext):
 
     data["msg_list"].append(msg.message_id)
     await delete_messages(messages=data["msg_list"], chat_id=message.chat.id)
-    await admin(message)
+    await manager_call_menu(data["callback"])
     await state.finish()
-
-
-@dp.callback_query_handler(text='admin_statistic')
-async def admin_statistic(call: types.CallbackQuery):
-    users = await user_list()
-    await try_edit_call(callback=call, text=f'Сейчас ботом пользуются {len(users)} чел.',
-                        markup=admin_keyboards.back_to_admin_panel)
 
 
 @dp.callback_query_handler(text='admin_all_categories')
 async def admin_all_categories(call: types.CallbackQuery):
     await try_edit_call(callback=call, text='Вы в меню редактора категорий',
-                        markup=await admin_keyboards.admin_catalog_markup())
+                        markup=await inline_kb_menu.admin_categories_markup())
 
 
 @dp.callback_query_handler(text='AddNewCategory')
@@ -95,173 +203,174 @@ async def add_new_category(call: types.CallbackQuery):
     state = dp.get_current().current_state()
     async with state.proxy() as data:
         msg = await call.message.answer('Укажите название новой категории',
-                                        reply_markup=admin_keyboards.cancel)
+                                        reply_markup=keyboard_menu.cancel)
         data["msg_list"] = [msg.message_id]
-    await FSMAdmin.next()
+        data["callback"] = call
+    await FSMAdmin.category.set()
 
 
 @dp.message_handler(state=FSMAdmin.category)
 async def FSMAdmin_category(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         if message.text.lower() != 'отмена':
-            await add_category(message.text)
+            try:
+                await add_category(category=message.text)
+            except:
+                await message.answer('Упс.. Что-то пошло не так!')
         msg = await message.answer("Обработка...", reply_markup=None)   # Для удаления клавы
         data["msg_list"].append(message.message_id)
         data["msg_list"].append(msg.message_id)
         await delete_messages(messages=data["msg_list"], chat_id=message.chat.id)
-        await message.answer(text='Вы в меню редактора категорий',
-                             reply_markup=await admin_keyboards.admin_catalog_markup())
+        await admin_all_categories(call=data["callback"])
     await state.finish()
 
 
-@dp.callback_query_handler(text_startswith='adminCategory_')
-async def adminCategory_(call: types.CallbackQuery):
-    category_id = int(call.data.split('_')[1])
+@dp.callback_query_handler(text_startswith='admin-category_')
+async def adminCategory(call: types.CallbackQuery):
+    category_id = int(call.data.split('_')[2])
     category = await category_name_by_id(category_id)
     await try_edit_call(callback=call, text=f'Вы в меню редактора категории «{category}»',
-                        markup=await admin_keyboards.admin_tovars_markup(category_id))
+                        markup=await inline_kb_menu.admin_tovar_list_markup(category_id=category_id))
 
 
-@dp.callback_query_handler(text_startswith='adminDelCategory_')
-async def adminDelCategory_(call: types.CallbackQuery):
-    await del_category(int(call.data.split('_')[1]))
-    await try_edit_call(callback=call, text=f'Вы в меню редактора категорий',
-                        markup=await admin_keyboards.admin_catalog_markup())
+@dp.callback_query_handler(IsAdmin(), text_startswith='DeleteCategory_')
+async def delete_category(call: types.CallbackQuery):
+    category = int(call.data.split('_')[2])
+    categoryName = await category_name_by_id(id=category)
 
-
-@dp.callback_query_handler(text_startswith='adminEditCategory_')
-async def adminEditCategory_(call: types.CallbackQuery):
     await try_delete_call(call)
-    await FSMAdminEdit.msg_list.set()
+    await FSMAdminDelete.msg_list.set()
     state = dp.get_current().current_state()
     async with state.proxy() as data:
-        msg = await call.message.answer('Укажите новое название категории',
-                                        reply_markup=admin_keyboards.cancel)
-        data["category_id"] = int(call.data.split('_')[1])
+        msg = await call.message.answer(f'Вы уверены, что хотите удалить категорию <code>{categoryName}</code>',
+                                        reply_markup=keyboard_menu.agreement)
         data["msg_list"] = [msg.message_id]
-    await FSMAdminEdit.category_name.set()
+        data["category"] = category
+        data["callback"] = call
+
+    await FSMAdminDelete.category.set()
 
 
-@dp.message_handler(state=FSMAdminEdit.category_name)
-async def FSMAdminEdit_category(message: types.Message, state: FSMContext):
+@dp.message_handler(state=FSMAdminDelete.category)
+async def FSMAdminDelete_category(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
-        if message.text.lower() != 'отмена':
-            await edit_category_name(id=data["category_id"], category=message.text)
+        if message.text.lower() == 'да':
+            try:
+                await delete_category_by_id(id=data["category"])
+                await admin_all_categories(call=data["callback"])
+            except:
+                await message.answer('Что-то пошло не так... ')
+                await adminCategory(call=data["callback"])
+        else:
+            await adminCategory(call=data["callback"])
 
         msg = await message.answer("Обработка...", reply_markup=None)   # Для удаления клавы
         data["msg_list"].append(message.message_id)
         data["msg_list"].append(msg.message_id)
         await delete_messages(messages=data["msg_list"], chat_id=message.chat.id)
-        category = await category_name_by_id(data["category_id"])
-        await message.answer(text=f'Вы в меню редактора категории «{category}»',
-                             reply_markup=await admin_keyboards.admin_tovars_markup(data["category_id"]))
     await state.finish()
 
 
-@dp.callback_query_handler(text_startswith='AddNewTovar_')
+@dp.callback_query_handler(IsAdmin(), text_startswith='AddNewTovar_')
 async def AddNewTovar_(call: types.CallbackQuery):
+    msg = await call.message.answer('Укажите название товара', reply_markup=keyboard_menu.cancel)
+
     await try_delete_call(call)
     await FSMAdmin.msg_list.set()
     state = dp.get_current().current_state()
     async with state.proxy() as data:
-        msg = await call.message.answer('Укажите название товара',
-                                        reply_markup=admin_keyboards.cancel)
         data["msg_list"] = [msg.message_id]
-        data["category_id"] = int(call.data.split('_')[1])
-    await FSMAdmin.tovar_name.set()
+        data["category"] = int(call.data.split('_')[2])
+        data["callback"] = call
+
+    await FSMAdmin.product.set()
 
 
-@dp.message_handler(state=FSMAdmin.tovar_name)
-async def AddNewTovar_name(message: types.Message, state: FSMContext):
+@dp.message_handler(state=FSMAdmin.product)
+async def AddNewTovar_title(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data["msg_list"].append(message.message_id)
+        await delete_messages(messages=data["msg_list"], chat_id=message.chat.id)
+        data["msg_list"] = []
+
         if message.text.lower() == 'отмена':
-            await delete_messages(messages=data["msg_list"], chat_id=message.chat.id)
             await state.finish()
-            category = await category_name_by_id(data["category_id"])
-            await message.answer(text=f'Вы в меню редактора категории «{category}»',
-                                 reply_markup=await admin_keyboards.admin_tovars_markup(data["category_id"]))
+            await adminCategory(call=data["callback"])
         else:
-            data["tovar_name"] = message.text
-            msg = await message.answer("Укажите цену товара", reply_markup=None)
+            data["product"] = message.text
+            msg = await message.answer("Укажите цену товара", reply_markup=keyboard_menu.cancel)
             data["msg_list"].append(msg.message_id)
-            await FSMAdmin.next()
+            await FSMAdmin.product_price.set()
 
 
-@dp.message_handler(state=FSMAdmin.tovar_price)
+@dp.message_handler(state=FSMAdmin.product_price)
 async def AddNewTovar_price(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data["msg_list"].append(message.message_id)
-        if message.text.lower() == 'отмена':
-            await delete_messages(messages=data["msg_list"], chat_id=message.chat.id)
-            await state.finish()
-            category = await category_name_by_id(data["category_id"])
-            await message.answer(text=f'Вы в меню редактора категории «{category}»',
-                                 reply_markup=await admin_keyboards.admin_tovars_markup(data["category_id"]))
+        await delete_messages(messages=data["msg_list"], chat_id=message.chat.id)
+        data["msg_list"] = []
 
-        elif message.text.isdigit():
-            data["tovar_price"] = int(message.text)
-            msg = await message.answer("Отправьте описание товара", reply_markup=admin_keyboards.withoutdesc)
+        if message.text.lower() == 'отмена':
+            await state.finish()
+            await adminCategory(call=data["callback"])
+
+        elif await digit_check(message.text):
+            data["product_price"] = float(message.text.replace(',', '.'))
+            msg = await message.answer("Отправьте описание товара", reply_markup=keyboard_menu.cancel)
             data["msg_list"].append(msg.message_id)
-            await FSMAdmin.next()
+            await FSMAdmin.product_desc.set()
 
         else:
-            msg = await message.answer("Укажите цену товара", reply_markup=None)
+            msg = await message.answer("Укажите цену товара", reply_markup=keyboard_menu.cancel)
             data["msg_list"].append(msg.message_id)
-            await FSMAdmin.tovar_price.set()
+            await FSMAdmin.product_price.set()
 
 
-@dp.message_handler(state=FSMAdmin.tovar_disc)
-async def AddNewTovar_disc(message: types.Message, state: FSMContext):
+@dp.message_handler(state=FSMAdmin.product_desc)
+async def AddNewTovar_desc(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data["msg_list"].append(message.message_id)
+        await delete_messages(messages=data["msg_list"], chat_id=message.chat.id)
+        data["msg_list"] = []
+
         if message.text.lower() == 'отмена':
-            await delete_messages(messages=data["msg_list"], chat_id=message.chat.id)
             await state.finish()
+            await adminCategory(call=data["callback"])
 
-            category = await category_name_by_id(data["category_id"])
-            await message.answer(text=f'Вы в меню редактора категории «{category}»',
-                                 reply_markup=await admin_keyboards.admin_tovars_markup(data["category_id"]))
         else:
-            data["tovar_disc"] = message.text if message.text != 'Без описания' else None
-            msg = await message.answer("Отправьте фото товара", reply_markup=admin_keyboards.without_photo)
+            data["product_desc"] = message.text
+            msg = await message.answer("Отправьте фото(или ссылку на фото)", reply_markup=keyboard_menu.cancel)
             data["msg_list"].append(msg.message_id)
-            await FSMAdmin.next()
+            await FSMAdmin.product_photo.set()
 
 
-@dp.message_handler(state=FSMAdmin.tovar_photo)
-async def AddNewTovar_without_photo(message: types.Message, state: FSMContext):
-    async with state.proxy() as data:
-        data["msg_list"].append(message.message_id)
-        if message.text.lower() == 'отмена':
-            await delete_messages(messages=data["msg_list"], chat_id=message.chat.id)
-            await state.finish()
-
-            category = await category_name_by_id(data["category_id"])
-            await message.answer(text=f'Вы в меню редактора категории «{category}»',
-                                 reply_markup=await admin_keyboards.admin_tovars_markup(data["category_id"]))
-        else:
-            data["tovar_photo"] = None
-            disc = f'\n\nОписание: <code>{data["tovar_disc"]}</code>' if data["tovar_disc"] else ''
-            msg = await message.answer(text=f'{data["tovar_name"]}: \t{data["tovar_price"]} руб.{disc}')
-            msg2 = await message.answer(f'Всё верно?', reply_markup=admin_keyboards.agreement)
-            data["msg_list"].append(msg.message_id)
-            data["msg_list"].append(msg2.message_id)
-            await FSMAdmin.next()
-
-
-@dp.message_handler(content_types=['photo'], state=FSMAdmin.tovar_photo)
+@dp.message_handler(state=FSMAdmin.product_photo, content_types=types.ContentType.ANY)
 async def AddNewTovar_photo(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data["msg_list"].append(message.message_id)
-        data["tovar_photo"] = message.photo[0].file_id
-        disc = f'\n\nОписание: <code>{data["tovar_disc"]}</code>' if data["tovar_disc"] else ''
-        msg = await message.answer_photo(photo=data["tovar_photo"], caption=f'{data["tovar_name"]}:'
-                                                                            f' \t{data["tovar_price"]} руб.{disc}')
-        msg2 = await message.answer(f'Всё верно?', reply_markup=admin_keyboards.agreement)
+        await delete_messages(messages=data["msg_list"], chat_id=message.chat.id)
+        data["msg_list"] = []
+
+        if message.photo:
+            data["product_photo"] = message.photo[0].file_id
+        elif message.text and message.text.lower() != 'отмена':
+            data["product_photo"] = message.text
+        else:
+            await state.finish()
+            await adminCategory(call=data["callback"])
+            return
+
+        msg_text = await tovar_info_text(title=data["product"], price=data["product_price"],
+                                         description=data["product_desc"], iscount=False)
+        try:
+            msg = await message.answer_photo(photo=data["product_photo"], caption=msg_text)
+        except:
+
+            msg = await message.answer(text=msg_text)
+        msg2 = await message.answer(text='Всё верно?', reply_markup=keyboard_menu.agreement)
         data["msg_list"].append(msg.message_id)
         data["msg_list"].append(msg2.message_id)
-        await FSMAdmin.next()
+    await FSMAdmin.agreement.set()
 
 
 @dp.message_handler(state=FSMAdmin.agreement)
@@ -270,42 +379,217 @@ async def FSMAdmin_agreement(message: types.Message, state: FSMContext):
         msg = await message.answer("Обработка...", reply_markup=None)   # Для удаления клавы
         data["msg_list"].append(msg.message_id)
         await delete_messages(messages=data["msg_list"], chat_id=message.chat.id)
+        data["msg_list"] = []
 
-        if message.text == 'Да':
-            tovar_id = await add_tovar(category=data["category_id"],
-                                       name=data["tovar_name"],
-                                       price=data["tovar_price"],
-                                       disc=data["tovar_disc"],
-                                       photo=data["tovar_photo"])
-            await send_admin_tovar(chatId=message.chat.id, msgId=message.message_id, tovar_id=tovar_id)
-        else:
-            category = await category_name_by_id(data["category_id"])
-            await message.answer(text=f'Вы в меню редактора категории «{category}»',
-                                 reply_markup=await admin_keyboards.admin_tovars_markup(data["category_id"]))
+        if message.text.lower() == 'да':
+            try:
+                await add_tovar(category=data["category"], tovar=data["product"], price=data["product_price"],
+                                description=data["product_desc"], photo=data["product_photo"])
+            except:
+                await message.answer('Что-то пошло не так')
+    await adminCategory(call=data["callback"])
     await state.finish()
 
 
-async def send_admin_tovar(chatId, msgId, tovar_id):
-    tovar_info = await tovar_by_id(tovar_id)
-    disc = f'\n\nОписание: <code>{tovar_info["disc"]}</code>' if tovar_info["disc"] else ''
-    text = f'{tovar_info["name"]}: \t{tovar_info["price"]}₽{disc}'
-    photo = tovar_info["photo"]
-    markup = await admin_keyboards.admin_tovar_markup(tovar_id)
+@dp.callback_query_handler(text_startswith='admin-tovar-info_')
+async def admin_tovar_info_menu(call: types.CallbackQuery):
+    page = int(call.data.split('_')[1])
+    category_id = int(call.data.split('_')[2])
+    tovar_id = int(call.data.split('_')[3])
 
-    await try_delete_msg(chatId=chatId, msgId=msgId)
-    try:
-        await dp.bot.send_photo(chat_id=chatId, photo=photo, caption=text, reply_markup=markup)
-    except:
-        await dp.bot.send_message(chat_id=chatId, text=text, reply_markup=markup)
+    tovar_info = await tovar_info_by_id(id=tovar_id)
+    if tovar_info:
+        msg_text = await tovar_info_text(title=tovar_info["tovar"], price=tovar_info["price"],
+                                         description=tovar_info["description"], iscount=False)
+        photo = tovar_info["photo"]
+        markup = await inline_kb_menu.admin_tovar_info_markup(category=category_id, page=page, tovar_id=tovar_id)
+
+        try:
+            await try_delete_call(call)
+            await call.message.answer_photo(photo=photo, caption=msg_text, reply_markup=markup)
+        except:
+            await try_edit_call(callback=call, text=msg_text, markup=markup)
+    else:
+        await call.answer('Товар больше не доступен!')
 
 
-@dp.callback_query_handler(text_startswith='adminTovar_')
-async def adminTovar_(call: types.CallbackQuery):
-    await send_admin_tovar(chatId=call.message.chat.id, msgId=call.message.message_id,
-                           tovar_id=int(call.data.split('_')[1]))
+@dp.callback_query_handler(IsAdmin(), text_startswith='DeleteTovarById_')
+async def DeleteTovarById(call: types.CallbackQuery):
+    product_id = int(call.data.split('_')[3])
+    tovarTitle = await product_title_by_id(id=product_id)
+
+    await try_delete_call(call)
+    await FSMAdminDelete.msg_list.set()
+    state = dp.get_current().current_state()
+    async with state.proxy() as data:
+        msg = await call.message.answer(f'Вы уверены, что хотите удалить товар <code>{tovarTitle}</code>',
+                                        reply_markup=keyboard_menu.agreement)
+        data["msg_list"] = [msg.message_id]
+        data["product_id"] = product_id
+        data["callback"] = call
+
+    await FSMAdminDelete.product.set()
 
 
-@dp.callback_query_handler(text_startswith='adminDeleteTovar_')
-async def adminDelCategory_(call: types.CallbackQuery):
-    await del_tovar(int(call.data.split('_')[2]))
-    await adminCategory_(call)
+@dp.message_handler(state=FSMAdminDelete.product)
+async def FSMAdminDelete_tovar_id(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        if message.text.lower() == 'да':
+            try:
+                await delete_tovar_by_id(id=data["product_id"])
+                await adminCategory(call=data["callback"])
+
+            except:
+                await message.answer('Что-то пошло не так... ')
+                await admin_tovar_info_menu(call=data["callback"])
+
+        else:
+            await admin_tovar_info_menu(call=data["callback"])
+
+        msg = await message.answer("Обработка...", reply_markup=None)   # Для удаления клавы
+        data["msg_list"].append(message.message_id)
+        data["msg_list"].append(msg.message_id)
+        await delete_messages(messages=data["msg_list"], chat_id=message.chat.id)
+    await state.finish()
+
+
+@dp.callback_query_handler(IsAdmin(), text_startswith='EditTovarPhoto_')
+async def EditTovarPhoto(call: types.CallbackQuery):
+    product_id = int(call.data.split('_')[3])
+    tovarTitle = await product_title_by_id(id=product_id)
+
+    await try_delete_call(call)
+    await FSMAdminEdit.msg_list.set()
+    state = dp.get_current().current_state()
+    async with state.proxy() as data:
+        msg = await call.message.answer(f'Приложите новое фото(или ссылку на фото) для товара <code>{tovarTitle}</code>',
+                                        reply_markup=keyboard_menu.cancel)
+        data["msg_list"] = [msg.message_id]
+        data["product_id"] = product_id
+        data["callback"] = call
+    await FSMAdminEdit.product_photo.set()
+
+
+@dp.message_handler(state=FSMAdminEdit.product_photo, content_types=types.ContentType.ANY)
+async def FSMAdminEdit_tovar_photo(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        if message.photo:
+            try:
+                await edit_tovar_photo(id=data["product_id"], photo=message.photo[0].file_id)
+            except:
+                await message.answer('Что-то пошло не так... ')
+        elif message.text and message.text.lower() != 'отмена':
+            try:
+                await edit_tovar_photo(id=data["product_id"], photo=message.text)
+            except:
+                await message.answer('Что-то пошло не так... ')
+
+        msg = await message.answer("Обработка...", reply_markup=None)  # Для удаления клавы
+        data["msg_list"].append(message.message_id)
+        data["msg_list"].append(msg.message_id)
+        await delete_messages(messages=data["msg_list"], chat_id=message.chat.id)
+    await state.finish()
+    await admin_tovar_info_menu(call=data["callback"])
+
+
+@dp.callback_query_handler(IsAdmin(), text_startswith='EditTovarTitle_')
+async def EditTovarTitle(call: types.CallbackQuery):
+    product_id = int(call.data.split('_')[3])
+    tovarTitle = await product_title_by_id(id=product_id)
+
+    await try_delete_call(call)
+    await FSMAdminEdit.msg_list.set()
+    state = dp.get_current().current_state()
+    async with state.proxy() as data:
+        msg = await call.message.answer(f'Укажите новое название товара <code>{tovarTitle}</code>',
+                                        reply_markup=keyboard_menu.cancel)
+        data["msg_list"] = [msg.message_id]
+        data["product_id"] = product_id
+        data["callback"] = call
+    await FSMAdminEdit.product.set()
+
+
+@dp.message_handler(state=FSMAdminEdit.product)
+async def FSMAdminEdit_tovar_title(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        if message.text.lower() != 'отмена':
+            try:
+                await edit_tovar_title(id=data["product_id"], title=message.text)
+            except:
+                await message.answer('Что-то пошло не так... ')
+
+        msg = await message.answer("Обработка...", reply_markup=None)   # Для удаления клавы
+        data["msg_list"].append(message.message_id)
+        data["msg_list"].append(msg.message_id)
+        await delete_messages(messages=data["msg_list"], chat_id=message.chat.id)
+    await state.finish()
+    await admin_tovar_info_menu(call=data["callback"])
+
+
+@dp.callback_query_handler(IsAdmin(), text_startswith='EditTovarPrice_')
+async def EditTovarPrice(call: types.CallbackQuery):
+    product_id = int(call.data.split('_')[3])
+    tovarTitle = await product_title_by_id(id=product_id)
+
+    await try_delete_call(call)
+    await FSMAdminEdit.msg_list.set()
+    state = dp.get_current().current_state()
+    async with state.proxy() as data:
+        msg = await call.message.answer(f'Укажите новую цену для товара <code>{tovarTitle}</code>',
+                                        reply_markup=keyboard_menu.cancel)
+        data["msg_list"] = [msg.message_id]
+        data["product_id"] = product_id
+        data["callback"] = call
+    await FSMAdminEdit.product_price.set()
+
+
+@dp.message_handler(state=FSMAdminEdit.product_price)
+async def FSMAdminEdit_tovar_price(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        if await digit_check(message.text):
+            try:
+                await edit_tovar_price(id=data["product_id"], price=float(message.text.replace(',', '.')))
+            except:
+                await message.answer('Что-то пошло не так... ')
+
+        msg = await message.answer("Обработка...", reply_markup=None)  # Для удаления клавы
+        data["msg_list"].append(message.message_id)
+        data["msg_list"].append(msg.message_id)
+        await delete_messages(messages=data["msg_list"], chat_id=message.chat.id)
+    await state.finish()
+    await admin_tovar_info_menu(call=data["callback"])
+
+
+@dp.callback_query_handler(IsAdmin(), text_startswith='EditTovarDesc_')
+async def EditTovarDesc(call: types.CallbackQuery):
+    product_id = int(call.data.split('_')[3])
+    tovarTitle = await product_title_by_id(id=product_id)
+
+    await try_delete_call(call)
+    await FSMAdminEdit.msg_list.set()
+    state = dp.get_current().current_state()
+    async with state.proxy() as data:
+        msg = await call.message.answer(f'Укажите новое описание для товара <code>{tovarTitle}</code>',
+                                        reply_markup=keyboard_menu.cancel)
+        data["msg_list"] = [msg.message_id]
+        data["product_id"] = product_id
+        data["callback"] = call
+    await FSMAdminEdit.product_desc.set()
+
+
+@dp.message_handler(state=FSMAdminEdit.product_desc)
+async def FSMAdminEdit_tovar_desc(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        if message.text.lower() != 'отмена':
+            try:
+                await edit_tovar_description(id=data["product_id"], description=message.text)
+            except:
+                await message.answer('Что-то пошло не так... ')
+
+        msg = await message.answer("Обработка...", reply_markup=None)  # Для удаления клавы
+        data["msg_list"].append(message.message_id)
+        data["msg_list"].append(msg.message_id)
+        await delete_messages(messages=data["msg_list"], chat_id=message.chat.id)
+    await state.finish()
+    await admin_tovar_info_menu(call=data["callback"])
+

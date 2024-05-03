@@ -1,6 +1,14 @@
 from aiogram.dispatcher.filters.state import StatesGroup, State
 
 
+class ConfirmOrder(StatesGroup):
+    msg_list = State()
+    callback = State()
+
+    fio = State()
+    phone = State()
+
+
 class AdminSpam(StatesGroup):
     msg_list = State()
     text = State()
@@ -8,6 +16,7 @@ class AdminSpam(StatesGroup):
 
 
 class Search(StatesGroup):
+    msg_list = State()
     tovar_name = State()
 
 
@@ -25,23 +34,43 @@ class SetCountInBasket(StatesGroup):
 
 class FSMAdmin(StatesGroup):
     msg_list = State()
+    callback = State()
+
+    category_id = State()
     category = State()
 
-    tovar_name = State()
-    tovar_price = State()
-    tovar_disc = State()
-    tovar_photo = State()
+    product = State()
+    product_price = State()
+    product_desc = State()
+    product_photo = State()
+    product_rating = State()
 
     agreement = State()
 
 
+class FSMAdminDelete(StatesGroup):
+    msg_list = State()
+    callback = State()
+
+    category_id = State()
+    category = State()
+
+    product_id = State()
+    product = State()
+
+
 class FSMAdminEdit(StatesGroup):
     msg_list = State()
+    callback = State()
+
+    product_id = State()
     category_id = State()
-    category_name = State()
-    tovar_name = State()
-    tovar_price = State()
-    tovar_disc = State()
-    tovar_photo = State()
+    category = State()
+
+    product = State()
+    product_price = State()
+    product_desc = State()
+    product_photo = State()
+    product_rating = State()
 
     agreement = State()
