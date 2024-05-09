@@ -1,18 +1,29 @@
-from aiogram.utils.markdown import hlink
-
-from data.config import admin_chat
 from loader import dp
+from aiogram.utils.markdown import hlink
+from data.config import admin_chat
 from keyboards.inline import inline_kb_menu
 from keyboards.default import keyboard_menu
 from aiogram import types
 from utils.db_api.db_asyncpg import *
-from states.state import SetCount, SetCountInBasket, Search, ConfirmOrder
+from states.state import SetCount, SetCountInBasket, Search, ConfirmOrder, AddReview
 from aiogram.dispatcher import FSMContext
 from handlers.users.admin import try_edit_call, try_delete_call, try_delete_msg, delete_messages, tovar_info_text
 from handlers.users.commands import start_menu
 
 
-@dp.message_handler(text='отмена', state="*")
+async def digit_check(digit):
+    digit = digit.replace(',', '.')
+    try:
+        digit = float(digit)
+        if digit >= 0:
+            return True
+        else:
+            return False
+    except ValueError:
+        return False
+
+
+@dp.message_handler(text=['отмена', 'Отмена'], state="*")
 async def start_state(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         try:
@@ -114,8 +125,16 @@ async def tovar_info_menu(call: types.CallbackQuery):
         prev_tovar_id = tovar_list_indexes[page - 2] if page - 2 >= 0 else tovar_list_indexes[-1]
         next_tovar_id = tovar_list_indexes[page % pages] if page % pages != 0 else tovar_list_indexes[0]
 
+        rating = None
+        review_list = await review_list_by_product_id(product_id=tovar_id)
+        if len(review_list) > 0:
+            rating_sum = 0
+            for review in review_list:
+                rating_sum += float(review["rating"])
+            rating = round(rating_sum / len(review_list), 2)
+
         msg_text = await tovar_info_text(title=tovar_info["tovar"], price=tovar_info["price"],
-                                         description=tovar_info["description"],
+                                         description=tovar_info["description"], rating=rating,
                                          iscount=True, pages=pages, page=1+tovar_list_indexes.index(tovar_id))
         photo = tovar_info["photo"]
         markup = await inline_kb_menu.tovar_info_markup(user_id=call.from_user.id, page=page, category_id=category_id,
@@ -374,3 +393,95 @@ async def search_tovar(message: types.Message, state: FSMContext):
 
     await message.answer(text=text, reply_markup=await inline_kb_menu.tovar_search_markup(tovars=tovar_list))
     await state.finish()
+
+
+@dp.callback_query_handler(text_startswith='reviews/')
+async def reviews_list_menu(call: types.CallbackQuery):
+    page = int(call.data.split('_')[1])
+    product_id = int(call.data.split('_')[2])
+
+    review_list = await review_list_by_product_id(product_id=product_id)
+    max_on_one_page = 5
+    pages = len(review_list) // max_on_one_page + 1
+
+    text = 'Отзывы пользователей'
+    if len(review_list) > 0:
+        for review in review_list[(page - 1) * max_on_one_page:page * max_on_one_page]:
+            user = await user_info_by_user_id(user_id=review["user_id"])
+            user_info = hlink(user["fio"], f"tg://user?id={user['user_id']}")
+            text += f'\n\n⭐ {review["rating"]} из 5.0' \
+                    f'\n{user_info} {review["dt"].strftime("%d.%m.%Y %H:%M")}'
+            if review["review"]:
+                text += f'\n<b>Отзыв:</b> {review["review"]}'
+    else:
+        text = 'У данного товара ещё нет отзывов!'
+    markup = await inline_kb_menu.review_markup(page=page, pages=pages, product_id=product_id)
+
+    if int(call.data.split('/')[1]) == 0:
+        await call.message.answer(text=text, reply_markup=markup)
+
+    else:
+        await try_edit_call(callback=call, text=text, markup=markup)
+
+
+@dp.callback_query_handler(text_startswith='add-review/')
+async def add_review_(call: types.CallbackQuery):
+    product_id = int(call.data.split('_')[2])
+    product_title = await product_title_by_id(id=product_id)
+
+    await try_delete_call(call)
+    await AddReview.msg_list.set()
+    state = dp.get_current().current_state()
+    async with state.proxy() as data:
+        msg = await call.message.answer(text=f'Укажите вашу оценку товара <b>{product_title}</b> по 5 бальной шкале, '
+                                             f'например, <code>4.7</code>',
+                                        reply_markup=keyboard_menu.cancel)
+        data["msg_list"] = [msg.message_id]
+        data["callback"] = call
+        data["product_id"] = product_id
+    await AddReview.rating.set()
+
+
+@dp.message_handler(state=AddReview.rating)
+async def AddReview_rating(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data["msg_list"].append(message.message_id)
+        await delete_messages(messages=data["msg_list"], chat_id=message.chat.id)
+        data["msg_list"] = []
+
+        if await digit_check(message.text) and float(message.text.replace(',', '.')) >= 0 and float(
+                message.text.replace(',', '.')) <= 5:
+            data["rating"] = round(float(message.text.replace(',', '.')), 2)
+
+            msg = await message.answer(
+                text=f'Напишите отзыв о товаре',
+                reply_markup=keyboard_menu.with_out_text)
+            data["msg_list"].append(msg.message_id)
+            await AddReview.review.set()
+
+        else:
+            product_title = await product_title_by_id(id=data["product_id"])
+            msg = await message.answer(
+                text=f'Укажите вашу оценку товара <b>{product_title}</b> по 5 бальной шкале, '
+                     f'например, <code>4.7</code>',
+                reply_markup=keyboard_menu.cancel)
+            data["msg_list"].append(msg.message_id)
+            await AddReview.rating.set()
+
+
+@dp.message_handler(state=AddReview.review)
+async def AddReview_review(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data["msg_list"].append(message.message_id)
+        await delete_messages(messages=data["msg_list"], chat_id=message.chat.id)
+        data["msg_list"] = []
+
+        if message.text.lower() == 'без текста':
+            data["review"] = None
+        else:
+            data["review"] = message.text
+
+        await add_review(user_id=message.from_user.id, product_id=data["product_id"], rating=data["rating"],
+                         review=data["review"])
+        await reviews_list_menu(call=data["callback"])
+        await state.finish()

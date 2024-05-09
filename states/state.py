@@ -74,3 +74,12 @@ class FSMAdminEdit(StatesGroup):
     product_rating = State()
 
     agreement = State()
+
+
+class AddReview(StatesGroup):
+    msg_list = State()
+
+    rating = State()
+    review = State()
+
+    confirm = State()

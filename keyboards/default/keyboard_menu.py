@@ -32,6 +32,9 @@ agreement = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text='Да')],
                                           [KeyboardButton(text='Нет')]],
                                 resize_keyboard=True)
 
+with_out_text = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text='Без текста')],
+                                              [KeyboardButton(text='отмена')]],
+                                    resize_keyboard=True)
 
 phone = ReplyKeyboardMarkup(
     keyboard=[[KeyboardButton(text='Отправить номер телефона 📱', request_contact=True)],

@@ -82,6 +82,7 @@ async def tovar_info_markup(user_id, count, category_id, tovar_id, page, pages, 
     if await tovar_is_favourite(product_id=tovar_id, user_id=user_id):
         favourite_text = "⭐ Убрать из избранного"
     btns.append([InlineKeyboardButton(text=favourite_text, callback_data=f'setFavourite_{page}_{category_id}_{tovar_id}_{count}')])
+    btns.append([InlineKeyboardButton(text='🌟 Отзывы', callback_data=f'reviews/0/_1_{tovar_id}')])
     btns.append([InlineKeyboardButton(text=f'➖', callback_data=f'tovar-info_{page}_{category_id}_{tovar_id}_{1 if count-1 <= 1 else count - 1}'),
                  InlineKeyboardButton(text=f'{count}', callback_data=f'setTovarCount_{page}_{category_id}_{tovar_id}_{count}'),
                  InlineKeyboardButton(text=f'➕', callback_data=f'tovar-info_{page}_{category_id}_{tovar_id}_{count + 1}')])
@@ -205,3 +206,18 @@ async def admin_tovar_info_markup(tovar_id, category, page=1):
 
     return InlineKeyboardMarkup(inline_keyboard=btns)
 
+
+async def review_markup(page, pages, product_id):
+    btns = list()
+    btns.append([InlineKeyboardButton(text='➕ Оставить отзыв', callback_data=f'add-review/1/_{page}_{product_id}')])
+
+    navigation_row = [
+        InlineKeyboardButton(text='⬅️', callback_data=f'reviews/1/_{page - 1 if page - 1 > 0 else pages}_{product_id}'),
+        InlineKeyboardButton(text=f'{page}', callback_data='_'),
+        InlineKeyboardButton(text='➡️', callback_data=f'reviews/1/_{page + 1 if pages >= page + 1 else 1}_{product_id}')
+    ]
+    if navigation_row and pages > 1:
+        btns.append(navigation_row)
+    btns.append([InlineKeyboardButton(text='Назад', callback_data='DeleteMessage')])
+
+    return InlineKeyboardMarkup(inline_keyboard=btns)

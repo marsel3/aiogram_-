@@ -59,8 +59,9 @@ async def admin_list():
 async def add_user(user_id: int, fio: str, referral=None):
     async with dp['db_pool'].acquire() as connection:
         async with connection.transaction():
-            await connection.execute('INSERT INTO "users" ("user_id", "fio", "bonus", "referral", "isadmin") '
-                                     'VALUES ($1, $2, $3, $4, $5)', user_id, fio, 10, referral, False)
+            dt = datetime.datetime.now()
+            await connection.execute('INSERT INTO "users" ("user_id", "fio", "bonus", "referral", "isadmin", "dt") '
+                                     'VALUES ($1, $2, $3, $4, $5, $6)', user_id, fio, 10, referral, False, dt)
 
 
 async def user_list():
@@ -271,3 +272,26 @@ async def edit_tovar_rating(id, rating):
     async with dp['db_pool'].acquire() as connection:
         async with connection.transaction():
             await connection.execute('UPDATE "products" SET "rating"=$1 WHERE "id"=$2', rating, id)
+
+
+async def review_list_by_product_id(product_id):
+    async with dp['db_pool'].acquire() as connection:
+        async with connection.transaction():
+            return await connection.fetch('SELECT * FROM "reviews" WHERE "product_id"=$1 ORDER BY "dt" DESC', product_id)
+
+
+async def add_review(user_id, product_id, rating, review):
+    async with dp['db_pool'].acquire() as connection:
+        async with connection.transaction():
+            dt = datetime.datetime.now()
+            result = await connection.fetchrow('INSERT INTO "reviews" '
+                                               '("user_id", "product_id", "rating", "review", "dt") '
+                                               'VALUES ($1, $2, $3, $4, $5) RETURNING "id"',
+                                               user_id, product_id, rating, review, dt)
+            return result["id"]
+
+
+async def user_info_by_user_id(user_id: int):
+    async with dp['db_pool'].acquire() as connection:
+        async with connection.transaction():
+            return await connection.fetchrow('SELECT * FROM "users" WHERE "user_id"=$1', user_id)

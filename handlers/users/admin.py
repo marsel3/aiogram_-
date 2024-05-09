@@ -2,7 +2,6 @@ from loader import dp
 from filters import IsAdmin
 from keyboards.default import keyboard_menu
 from keyboards.inline import inline_kb_menu
-
 from aiogram import types
 from aiogram.types import InputFile
 from aiogram.utils.markdown import hlink
@@ -14,12 +13,17 @@ from states.state import AdminSpam, FSMAdmin, FSMAdminDelete, FSMAdminEdit
 from utils.db_api.db_asyncpg import *
 
 
-async def tovar_info_text(title, price, description, page=1, pages=1, iscount=True):
+async def tovar_info_text(title, price, description, page=1, pages=1, iscount=True, rating=None):
     msg_text = f'Товар [{page} из {pages}]' if iscount else ''
+
+    rating_text = ''
+    if rating:
+        rating_text = f"Оценка клиентов: {rating} из 5.0"
 
     msg_text += f'\n\n<b>{title}</b>' \
                 f'\n\n<b>Цена</b>: <code>{price} ₽</code>' \
-                f'\n\n<b>Описание</b>:\n<code>{description}</code>'
+                f'\n\n<b>Описание</b>:\n<code>{description}</code>' \
+                f'\n\n{rating_text}'
 
     return msg_text
 
