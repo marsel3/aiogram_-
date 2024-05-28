@@ -67,7 +67,7 @@ async def tovar_list_markup(category_id, page=1):
 async def tovar_search_markup(tovars):
     btns = list()
     for tovar in tovars:
-        btns.append([InlineKeyboardButton(text=f'{tovar["tovar"]}', callback_data=f'tovar-info_{1}_{tovar["id"]}_1')])
+        btns.append([InlineKeyboardButton(text=f'{tovar["tovar"]}', callback_data=f'tovar-info_{1}_{tovar["category"]}_{tovar["id"]}_1')])
     btns.append([InlineKeyboardButton(text='⬅️ Назад', callback_data='categories')])
 
     return InlineKeyboardMarkup(inline_keyboard=btns)
