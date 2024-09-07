@@ -180,8 +180,14 @@ async def AdminSpam_confirm(message: types.Message, state: FSMContext):
                             await dp.bot.send_video(chat_id=user["user_id"], video=data["video"], caption=data["text"])
                         else:
                             await dp.bot.send_video(chat_id=user["user_id"], video=data["video"])
+                    elif "photo" in data:
+                        if data["text"]:
+                            await dp.bot.send_photo(chat_id=user["user_id"], photo=data["photo"], caption=data["text"])
+                        else:
+                            await dp.bot.send_photo(chat_id=user["user_id"], photo=data["photo"])
                     else:
                         await dp.bot.send_message(chat_id=user["user_id"], text=data["text"])
+
                 except:
                     pass
             await message.answer('Рассылка завершена!', reply_markup=None)
